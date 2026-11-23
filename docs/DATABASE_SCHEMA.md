@@ -38,3 +38,7 @@ Order fulfilment and payment state stay distinct. A cash payment records `paidAt
 `payments` stores one record per online order reference with environment, amount, currency, state, last gateway status, provider reference, and settlement time. Payment and order status update in one transaction. Sandbox and simulator settlements are excluded from the revenue report.
 
 `notifications` uses a unique order-event key and tracks queued, sending, sent, and failed email jobs. Message bodies contain the order reference and event text. Sends are outside the transaction so unavailable SMTP cannot roll back the order.
+
+## Automation outbox
+
+`outboxes` holds events with a unique event ID, status, attempts, next delivery time, temporary worker claim, and acknowledgement timestamps. Business transactions record their events with the relevant orders, payments, accounts, and catalogue records.

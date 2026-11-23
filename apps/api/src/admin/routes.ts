@@ -1,6 +1,8 @@
 import express, { Router, type Response } from 'express';
 import mongoose, { type ClientSession, type Types } from 'mongoose';
 import { z } from 'zod';
+import { automationConfigured } from '../automation/delivery.ts';
+import { Outbox, recordEvent } from '../automation/events.ts';
 import { User } from '../auth/models.ts';
 import { sessionAccess } from '../auth/routes.ts';
 import { Category, Product } from '../catalogue/models.ts';
@@ -76,6 +78,21 @@ export function adminRouter(config: AppConfig, uploadImage?: UploadImage, sendEm
     const { period } = parseInput(periodInput, request.query);
     response.json({ period, items: await revenueReport(period) });
   });
+  router.get('/automation', async (_request, response) => {
+    const items = await Outbox.find().sort({ createdAt: -1 }).limit(100).select('event state attempts nextAttempt deliveredAt processedAt lastError').lean();
+    response.json({ enabled: automationConfigured(config), items });
+  });
+  router.post('/automation/:eventId/retry', async (request, response) => {
+    const eventId = parseInput(z.uuid(), request.params.eventId);
+    await mutation(response, 'retried', 'event', eventId, async session => {
+      const result = await Outbox.updateOne({ 'event.eventId': eventId, state: 'failed' }, {
+        $set: { state: 'queued', attempts: 0, nextAttempt: new Date(), lastError: '' },
+        $unset: { leaseKey: 1, leaseUntil: 1 },
+      }, { session });
+      if (!result.matchedCount) throw new HttpError(409, 'EVENT_NOT_RETRYABLE', 'Only failed events can be retried.');
+    });
+    response.status(204).end();
+  });
   router.get('/audit', async (_request, response) => {
     response.json({ items: await AuditLog.find().sort({ createdAt: -1 }).limit(100).select('-__v').lean() });
   });
@@ -110,9 +127,11 @@ export function adminRouter(config: AppConfig, uploadImage?: UploadImage, sendEm
   async function setProduct(session: ClientSession, data: z.infer<typeof productInput>, creating: boolean) {
     if (!(await Category.exists({ slug: data.category }).session(session))) missing('Category');
     const values = productValues(data);
-    return creating
-      ? new Product(values).save({ session })
+    const product = creating
+      ? await new Product(values).save({ session })
       : await Product.findOneAndUpdate({ slug: data.slug }, { $set: values }, { session, returnDocument: 'after' }).lean() ?? missing('Product');
+    await recordEvent(creating ? 'product.created' : 'product.updated', data.slug, { category: data.category, published: data.published }, session);
+    return product;
   }
 
   router.post('/products', async (request, response) => {
@@ -130,7 +149,9 @@ export function adminRouter(config: AppConfig, uploadImage?: UploadImage, sendEm
   router.delete('/products/:slug', async (request, response) => {
     const slug = parseInput(slugSchema, request.params.slug);
     await mutation(response, 'archived', 'product', slug, async session => {
-      if (!(await Product.updateOne({ slug }, { $set: { published: false } }, { session })).matchedCount) missing('Product');
+      const result = await Product.updateOne({ slug, published: true }, { $set: { published: false } }, { session });
+      if (result.modifiedCount) await recordEvent('product.updated', slug, { published: false }, session);
+      else if (!(await Product.exists({ slug }).session(session))) missing('Product');
     });
     response.status(204).end();
   });
@@ -158,9 +179,10 @@ export function adminRouter(config: AppConfig, uploadImage?: UploadImage, sendEm
       record.orderStatus = status;
       await record.save({ session });
       const key = status === 'pending' ? undefined : await prepareNotice(record, status, session, sendEmail);
+      await recordEvent('order.status_changed', reference, { status }, session, key);
       return { order: record, key };
     });
-    void deliverNotice(result.key, sendEmail);
+    if (!automationConfigured(config)) void deliverNotice(result.key, sendEmail);
     response.json({ order: orderView(result.order) });
   });
   router.patch('/orders/:reference/cash-payment', async (request, response) => {
@@ -174,9 +196,10 @@ export function adminRouter(config: AppConfig, uploadImage?: UploadImage, sendEm
       record.paidAt = new Date();
       await record.save({ session });
       const key = await prepareNotice(record, 'paid', session, sendEmail);
+      await recordEvent('payment.completed', reference, { environment: 'cash', status: 'paid' }, session, key);
       return { order: record, key };
     });
-    void deliverNotice(result.key, sendEmail);
+    if (!automationConfigured(config)) void deliverNotice(result.key, sendEmail);
     response.json({ order: orderView(result.order) });
   });
 
@@ -210,9 +233,14 @@ export function adminRouter(config: AppConfig, uploadImage?: UploadImage, sendEm
   router.put('/inventory/:slug', async (request, response) => {
     const slug = parseInput(slugSchema, request.params.slug);
     const values = parseInput(stockInput, request.body);
-    const item = await mutation(response, 'saved', 'stock', slug, session => Stock.findOneAndUpdate(
-      { slug }, { $set: values }, { session, upsert: true, returnDocument: 'after' },
-    ).lean());
+    const item = await mutation(response, 'saved', 'stock', slug, async session => {
+      const previous = await Stock.findOne({ slug }).session(session).lean();
+      const updated = await Stock.findOneAndUpdate({ slug }, { $set: values }, { session, upsert: true, returnDocument: 'after' }).lean();
+      if (values.onHand <= values.threshold && (!previous || previous.onHand > previous.threshold)) {
+        await recordEvent('inventory.low_stock', slug, { onHand: values.onHand, threshold: values.threshold }, session);
+      }
+      return updated;
+    });
     response.json({ item });
   });
 

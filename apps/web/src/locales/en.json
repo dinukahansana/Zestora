@@ -359,7 +359,8 @@
     "defaultLanguage": "Default language",
     "zones": "Delivery zones",
     "notifications": "Enable notifications",
-    "ai": "Enable AI features"
+    "ai": "Enable AI features",
+    "automation": "Automation"
   },
   "payment": {
     "billingAddress": "Billing address",
@@ -374,5 +375,27 @@
     "cancelledReturn": "You returned from the gateway before finishing. Check the latest payment status below.",
     "verifiedByServer": "The status comes from Zestora’s server after it checks the payment notification.",
     "refresh": "Refresh status"
+  },
+  "automation": {
+    "enabled": "n8n delivery is configured.",
+    "disabled": "Events are saved. Connect n8n to start workflow delivery.",
+    "state": {
+      "queued": "Queued",
+      "sending": "Sending",
+      "retry": "Waiting to retry",
+      "failed": "Failed",
+      "delivered": "Delivered"
+    },
+    "event": {
+      "order_created": "Order created",
+      "order_status_changed": "Order status changed",
+      "payment_completed": "Payment completed",
+      "payment_failed": "Payment failed",
+      "product_created": "Product created",
+      "product_updated": "Product updated",
+      "inventory_low_stock": "Low stock",
+      "review_created": "Review created",
+      "customer_registered": "Customer registered"
+    }
   }
 }

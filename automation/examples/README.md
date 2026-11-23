@@ -1,3 +1,3 @@
-# Example payloads
+# Example event payloads
 
-Store synthetic JSON inputs here alongside the workflows that they exercise. Include duplicate delivery or invalid input examples when they help verify the workflow. Use fictional identifiers and contact information.
+The JSON files show synthetic events for the three workflows. The API generates a fresh event ID, timestamp, and signature when sending real deliveries. After importing the workflows, create an order in Zestora to verify a registered event through the full pipeline.

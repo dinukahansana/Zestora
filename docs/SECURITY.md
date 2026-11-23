@@ -18,6 +18,8 @@
 
 - PayHere payment responses are verified on the API against the merchant, signature, order amount, currency, and environment. The receipt page reads server state. Sandbox and simulator outcomes are labeled and excluded from live revenue.
 
+- Automation events contain a stable resource ID and minimal fields. The API verifies a timestamped HMAC and checks the stored record before acknowledging a workflow. Job claims, retry limits, and a separate mail job key prevent duplicate side effects.
+
 ## Implementation requirements
 
 - Hash passwords, use secure sessions and role-based authorization, and use a secure setup process for the initial administrator. Require guest order verification.

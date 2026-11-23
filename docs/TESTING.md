@@ -26,6 +26,10 @@ Run `npm run test:shop` with Chromium. The suite starts Vite, Express, and a tem
 
 The API suite sends synthetic signed and invalid test callbacks to Express. It verifies exact amount matching, duplicate delivery, a chargeback, authorization, simulator isolation, and an SMTP failure. The browser shop suite exercises simulated failure and success. External sandbox callbacks need the approved PayHere configuration and a public endpoint.
 
+## Automation tests
+
+The API suite covers transactional event capture, signing, stale and altered messages, concurrent delivery claims, workflow outages, duplicate acknowledgement, and manual retry. See the [n8n setup](N8N_SETUP.md) for the published workflow paths and external test procedure.
+
 ## Planned test coverage
 
 | Tool | Planned use |

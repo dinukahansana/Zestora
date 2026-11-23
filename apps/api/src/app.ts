@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import { createImageUploader, type UploadImage } from './admin/images.ts';
 import { adminRouter } from './admin/routes.ts';
 import { storefrontSettingsRouter } from './admin/settings.ts';
+import { automationRouter } from './automation/routes.ts';
 import { authRouter } from './auth/routes.ts';
 import { passwordResetRouter } from './auth/passwordReset.ts';
 import { profileRouter } from './auth/profile.ts';
@@ -57,6 +58,7 @@ export function createApp(
   api.use(['/shop/checkout', '/orders'], requireDatabase);
   api.use(orderingRouter(config, sendEmail));
   api.use('/payments', requireDatabase, paymentsRouter(config, sendEmail));
+  api.use('/integrations/n8n', requireDatabase, automationRouter(config, sendEmail));
   api.use('/admin', requireDatabase, adminRouter(config, uploadImage, sendEmail));
   api.use('/shop/storefront', requireDatabase);
   api.use(storefrontSettingsRouter);

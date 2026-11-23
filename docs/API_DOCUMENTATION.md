@@ -88,3 +88,9 @@ Checkout accepts `payment: "cash" | "payhere"`, optional `language`, and `billin
 | `POST /api/payments/simulate` | For development only. Add `outcome: "paid" | "failed"` to the access details. The order remains marked as a simulated payment. |
 
 Signed-in customers can pay and read their orders from their own account. Guest orders use the dedicated guest tracking key. A gateway redirect shows status from this API.
+
+## Automation transport
+
+`POST /api/integrations/n8n/consume` accepts an event and the headers `X-Zestora-Timestamp` and `X-Zestora-Signature`. Express verifies the HMAC and clock window, checks the stored envelope, and returns `{ accepted, eventId, duplicate }`.
+
+`GET /api/admin/automation` shows recent events. An administrator can use `POST /api/admin/automation/:eventId/retry` to requeue a failed event and record the action in the audit log.

@@ -1,8 +1,9 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { Router, type CookieOptions, type Request, type Response } from 'express';
 import { rateLimit } from 'express-rate-limit';
-import type { Types } from 'mongoose';
+import mongoose, { type Types } from 'mongoose';
 import { z } from 'zod';
+import { recordEvent } from '../automation/events.ts';
 import type { AppConfig } from '../config.ts';
 import { HttpError, isDuplicateKey, parseInput } from '../http.ts';
 import { Session, User, type Role } from './models.ts';
@@ -83,7 +84,11 @@ export function authRouter(config: AppConfig) {
     const { name, email, password } = parseInput(registerInput, request.body);
     const passwordHash = await hashPassword(password);
     try {
-      const user = await User.create({ name, email, passwordHash, role: 'customer' });
+      const user = await mongoose.connection.transaction(async session => {
+        const account = await new User({ name, email, passwordHash, role: 'customer' }).save({ session });
+        await recordEvent('customer.registered', account._id.toString(), {}, session);
+        return account;
+      });
       await sessions.issue(request, response, user._id);
       response.status(201).json({ user: publicUser(user) });
     } catch (error) {

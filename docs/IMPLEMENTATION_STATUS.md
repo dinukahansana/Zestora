@@ -65,6 +65,16 @@ The starter page and health endpoint are the two implemented features. MongoDB A
 | Notifications | Localized SMTP receipts and order updates, one persisted email job per order event, and failure tracking. |
 | Verification | Twenty API tests, five database-backed browser tests, type checking, and both builds. PayHere callbacks used synthetic test credentials. The external sandbox and real SMTP tests require service configuration. |
 
+## Phase 6
+
+| Area | Status |
+| --- | --- |
+| Outbox | Transactions save domain changes and their minimal events together. Events remain queued when delivery is disabled. |
+| Delivery | Timestamped HMAC, expiring worker claims, increasing retry delays, acknowledgement, and failed-event replay. |
+| n8n | Three published workflows verified in a local n8n 2.48.8 instance, including order-created and order-status notifications and the shared event workflow. A duplicate delivered no additional email. |
+| Monitoring | The admin Automation tab lists status and attempts and requeues terminal failures. |
+| Checks | Twenty-one API cases, eleven browser cases, type checks and both builds, and the n8n integration smoke test. |
+
 ## Next milestone
 
-Phase 6 adds the transactional outbox, signed delivery to n8n, retry handling, and workflow monitoring.
+Phase 7 adds the customer assistant, recommendations, business intelligence, feedback analysis, marketing drafts, and inventory insights.

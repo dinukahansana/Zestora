@@ -65,3 +65,7 @@
 | Verified return | The return page asks Express for the stored status. It can show Pending if the browser returns before the callback arrives. |
 | Idempotent payment | Repeated successful notifications keep the same payment and settlement time. A chargeback updates settlement separately from order fulfilment. |
 | Email job | Each order event has one notification key. A failed mail job is recorded while the order remains available. |
+
+## Phase 6
+
+A transactional outbox saves a business change and its event together. The worker claims the event after that transaction commits. n8n receives it at a Webhook node and returns it to Express for signature verification. Delivery failures can retry without recreating the order. The separate email job key keeps a repeated event from sending a second message.

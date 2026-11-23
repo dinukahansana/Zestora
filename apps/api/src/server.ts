@@ -1,3 +1,4 @@
+import { startDelivery } from './automation/delivery.ts';
 import { createApp } from './app.ts';
 import { readConfig } from './config.ts';
 import { connectDatabase, disconnectDatabase } from './database.ts';
@@ -14,6 +15,7 @@ if (config.mongoUri) {
   }
 }
 
+let stopDelivery = () => {};
 const server = createApp(config).listen(config.port, config.host, (error) => {
   if (error) {
     console.error('API listen failed:', error.message);
@@ -21,9 +23,13 @@ const server = createApp(config).listen(config.port, config.host, (error) => {
     return;
   }
 
+  stopDelivery = startDelivery(config);
   console.log(`Zestora API listening on ${config.host}:${config.port}`);
 });
 
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {
-  process.once(signal, () => server.close(() => void disconnectDatabase()));
+  process.once(signal, () => {
+    stopDelivery();
+    server.close(() => void disconnectDatabase());
+  });
 }

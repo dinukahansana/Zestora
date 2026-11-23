@@ -1,4 +1,6 @@
 import { execFile } from 'node:child_process';
+import { once } from 'node:events';
+import { createServer } from 'node:http';
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
@@ -7,6 +9,8 @@ import request from 'supertest';
 import sharp from 'sharp';
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest';
 import { createApp } from '../src/app.ts';
+import { deliverOne } from '../src/automation/delivery.ts';
+import { eventSignature, Outbox } from '../src/automation/events.ts';
 import { Session, User } from '../src/auth/models.ts';
 import { Category, Product } from '../src/catalogue/models.ts';
 import { productInput, productValues } from '../src/catalogue/schemas.ts';
@@ -214,7 +218,9 @@ describe('ordering and profiles', () => {
   test('account orders and saved addresses belong to the authenticated customer', async () => {
     const customer = request.agent(app);
     const stranger = request.agent(app);
-    await customer.post('/api/auth/register').send({ name: buyer.name, email: buyer.email, password }).expect(201);
+    const registration = await customer.post('/api/auth/register').send({ name: buyer.name, email: buyer.email, password }).expect(201);
+    const event = await Outbox.findOne({ 'event.resourceId': registration.body.user.id, 'event.eventType': 'customer.registered' });
+    expect(event?.event.payload).toEqual({});
     await stranger.post('/api/auth/register').send({ name: 'Other Buyer', email: 'other-buyer@zestora.example', password }).expect(201);
     const created = await customer.post('/api/orders').send({
       items: [mango], fulfillment: pickup, customer: buyer, expectedTotal: 1940, checkoutKey: randomUUID(),
@@ -446,4 +452,86 @@ describe('PayHere and notifications', () => {
     expect(messages[1].text).toContain(reference);
     expect(messages[1].subject).toMatch(/තහවුරු/);
   });
+});
+
+describe('automation delivery', () => {
+  test('outbox survives an unavailable workflow and acknowledges a deduplicated retry', async () => {
+    const messages: Email[] = [];
+    const later = new Date(Date.now() + 86400000);
+    await Outbox.updateMany({}, { $set: { nextAttempt: later } });
+    const signingSecret = randomBytes(32).toString('hex');
+    let unavailable = true;
+    let receiver: ReturnType<typeof createApp>;
+    const routes: string[] = [];
+    const relay = createServer(async (incoming, response) => {
+      routes.push(incoming.url ?? '');
+      if (unavailable) { response.statusCode = 503; response.end(); return; }
+      const parts = [];
+      for await (const chunk of incoming) parts.push(chunk);
+      const forwarded = await request(receiver).post('/api/integrations/n8n/consume')
+        .set('x-zestora-timestamp', String(incoming.headers['x-zestora-timestamp']))
+        .set('x-zestora-signature', String(incoming.headers['x-zestora-signature']))
+        .send(JSON.parse(Buffer.concat(parts).toString()));
+      response.statusCode = forwarded.status;
+      response.end();
+    });
+    relay.listen(0, '127.0.0.1');
+    await once(relay, 'listening');
+    const address = relay.address();
+    if (!address || typeof address === 'string') throw new Error('Test relay failed.');
+
+    try {
+      const automated = readConfig({ NODE_ENV: 'test', N8N_WEBHOOK_BASE_URL: 'http://127.0.0.1:' + address.port + '/webhook', N8N_SHARED_SECRET: signingSecret });
+      receiver = createApp(automated, async message => { messages.push(message); });
+      const order = await request(receiver).post('/api/orders').send({
+        items: [mango], customer: buyer, fulfillment: pickup, expectedTotal: 1940, checkoutKey: randomUUID(), guestKey: guestKey(),
+      }).expect(201);
+      const reference = order.body.order.reference;
+      const initial = await Outbox.findOne({ 'event.resourceId': reference });
+      expect(initial?.event).toMatchObject({ eventType: 'order.created', resourceId: reference, businessId: 'default' });
+      expect(JSON.stringify(initial?.event)).not.toContain(buyer.email);
+      expect(messages).toHaveLength(0);
+      const runners = await Promise.all([deliverOne(automated), deliverOne(automated)]);
+      expect(runners.sort()).toEqual([false, true]);
+      expect(routes).toEqual(['/webhook/zestora-order-created']);
+      expect((await Outbox.findById(initial?._id))?.state).toBe('retry');
+      expect(await Order.exists({ reference })).toBeTruthy();
+
+      unavailable = false;
+      await deliverOne(automated, new Date(Date.now() + 60000));
+      const delivered = await Outbox.findById(initial?._id);
+      expect(delivered).toMatchObject({ attempts: 2, state: 'delivered' });
+      expect(messages).toHaveLength(1);
+      if (!initial) throw new Error('Fixture event missing.');
+      const now = String(Math.floor(Date.now() / 1000));
+      const stale = String(Number(now) - 301);
+      await request(receiver).post('/api/integrations/n8n/consume')
+        .set('x-zestora-timestamp', stale).set('x-zestora-signature', eventSignature(initial.event, stale, signingSecret))
+        .send(initial.event).expect(403);
+      await request(receiver).post('/api/integrations/n8n/consume')
+        .set('x-zestora-timestamp', now).set('x-zestora-signature', eventSignature(initial.event, now, signingSecret))
+        .send({ ...initial.event, resourceId: 'different-order' }).expect(403);
+      const duplicate = await request(receiver).post('/api/integrations/n8n/consume')
+        .set('x-zestora-timestamp', now).set('x-zestora-signature', eventSignature(initial.event, now, signingSecret))
+        .send(initial.event).expect(200);
+      expect(duplicate.body.duplicate).toBe(true);
+      expect(messages).toHaveLength(1);
+
+      const admin = request.agent(receiver);
+      await admin.post('/api/auth/login').send({ email: demoEmail, password }).expect(200);
+      await admin.post('/api/admin/automation/' + initial.event.eventId + '/retry').expect(409);
+      unavailable = true;
+      const second = await request(receiver).post('/api/orders').send({
+        items: [mango], customer: buyer, fulfillment: pickup, expectedTotal: 1940, checkoutKey: randomUUID(), guestKey: guestKey(),
+      }).expect(201);
+      const expired = await Outbox.findOne({ 'event.resourceId': second.body.order.reference });
+      if (!expired) throw new Error('Second fixture event missing.');
+      for (let attempt = 0; attempt < 6; attempt += 1) expect(await deliverOne(automated, new Date(Date.now() + 3600000))).toBe(true);
+      expect(await Outbox.findById(expired._id)).toMatchObject({ state: 'failed', attempts: 6 });
+      await admin.post('/api/admin/automation/' + expired.event.eventId + '/retry').expect(204);
+      expect(await Outbox.findById(expired._id)).toMatchObject({ state: 'queued', attempts: 0 });
+    } finally {
+      await new Promise<void>(resolve => relay.close(() => resolve()));
+    }
+  }, 15000);
 });

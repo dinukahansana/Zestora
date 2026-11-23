@@ -19,7 +19,7 @@ In local development, the browser requests `/api/health` at the same address as 
 - **Express and MongoDB currently** serve catalogue, accounts, orders, and checkout pricing. A MongoDB transaction links an order and its coupon usage. The admin workspace adds inventory, order operations, and reporting queries. The PayHere workflow comes next. Mongoose defines persistence models.
 - **Cloudinary** stores images. MongoDB stores image references and business records.
 - **PayHere** receives payment requests and sends status notifications to a verified backend endpoint. The browser return page reads backend payment state.
-- **n8n** orchestrates notifications, schedules, and calls to approved services. Use an outbox to record a business change and its pending automation event together where appropriate.
+- **n8n** orchestrates notifications, schedules, and calls to approved services. The outbox records each covered business change and its event together. A worker leases and sends the event to a configured n8n webhook.
 - **AI providers** turn authorized, validated inputs into language responses or structured suggestions. The backend authenticates requests, validates outputs, and calculates business metrics independently.
 
 For example, the API will create an order with its outbox event, then a delivery worker will send a signed event to n8n. n8n can notify the shop and customer while the original order remains available even if delivery fails. See [AI and automation](AI_AUTOMATION_SPECIFICATION.md) for event details.

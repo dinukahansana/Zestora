@@ -2,6 +2,8 @@ import { createHash, randomBytes } from 'node:crypto';
 import { Router } from 'express';
 import { rateLimit } from 'express-rate-limit';
 import mongoose from 'mongoose';
+import { automationConfigured } from '../automation/delivery.ts';
+import { recordEvent } from '../automation/events.ts';
 import { sessionAccess } from '../auth/routes.ts';
 import type { AppConfig } from '../config.ts';
 import { HttpError, isDuplicateKey, parseInput } from '../http.ts';
@@ -110,9 +112,10 @@ export function orderingRouter(config: AppConfig, sendEmail?: SendEmail) {
         await order.save({ session });
         if (online) await new Payment({ orderReference: reference, environment: mode, amount: priced.totals.total }).save({ session });
         const key = await prepareNotice(order, 'created', session, sendEmail);
+        await recordEvent('order.created', order.reference, { fulfillment: input.fulfillment.type, paymentMethod: order.paymentMethod }, session, key);
         return { order, key };
       });
-      void deliverNotice(created.key, sendEmail);
+      if (!automationConfigured(config)) void deliverNotice(created.key, sendEmail);
       response.status(201).json({ order: orderView(created.order) });
     } catch (error) {
       if (isDuplicateKey(error)) {

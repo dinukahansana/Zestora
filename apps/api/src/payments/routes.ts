@@ -3,6 +3,8 @@ import express, { Router, type Request } from 'express';
 import { rateLimit } from 'express-rate-limit';
 import mongoose from 'mongoose';
 import { z } from 'zod';
+import { automationConfigured } from '../automation/delivery.ts';
+import { recordEvent } from '../automation/events.ts';
 import { sessionAccess } from '../auth/routes.ts';
 import type { AppConfig } from '../config.ts';
 import { HttpError, parseInput } from '../http.ts';
@@ -62,9 +64,10 @@ export function paymentsRouter(config: AppConfig, sendEmail?: SendEmail) {
       await payment.save({ session });
       await order.save({ session });
       const key = environment === 'live' && status !== 'pending' ? await prepareNotice(order, status, session, sendEmail) : undefined;
+      await recordEvent(status === 'paid' ? 'payment.completed' : 'payment.failed', reference, { environment, status }, session, key);
       return { status, key };
     });
-    void deliverNotice(result.key, sendEmail);
+    if (!automationConfigured(config)) void deliverNotice(result.key, sendEmail);
     return result.status;
   }
 

@@ -1,5 +1,3 @@
 # Zestora automation
 
-`workflows/` holds importable n8n exports. `examples/` holds synthetic input payloads for testing those exports. Follow the [n8n setup guide](../docs/N8N_SETUP.md) and [AI and automation specification](../docs/AI_AUTOMATION_SPECIFICATION.md).
-
-The backend will keep responsibility for authorization and business rules. n8n will coordinate event-triggered and scheduled work.
+The n8n exports in `workflows/` accept signed events and forward them to the Zestora API. See [n8n setup](../docs/N8N_SETUP.md) for import and publication steps and [examples](examples/README.md) for sample envelopes.

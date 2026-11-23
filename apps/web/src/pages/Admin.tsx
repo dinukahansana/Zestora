@@ -2,12 +2,13 @@ import { useTranslation } from 'react-i18next';
 import { Link, useSearchParams } from 'react-router';
 import { PageHeading } from '../components/Storefront';
 import { RequestError, useAccount } from '../commerce/api';
+import { AutomationAdmin } from '../admin/Automation';
 import { CatalogueEditor } from '../admin/CatalogueEditor';
 import { Dashboard } from '../admin/Dashboard';
 import { CustomersAdmin, OrdersAdmin } from '../admin/Operations';
 import { SettingsAdmin, StockCouponsAdmin } from '../admin/Settings';
 
-const tabs = ['overview', 'catalogue', 'orders', 'customers', 'stockCoupons', 'settings'] as const;
+const tabs = ['overview', 'catalogue', 'orders', 'customers', 'stockCoupons', 'settings', 'automation'] as const;
 type Tab = typeof tabs[number];
 
 export default function AdminPage() {
@@ -35,6 +36,7 @@ export default function AdminPage() {
           {tab === 'customers' && <CustomersAdmin />}
           {tab === 'stockCoupons' && <StockCouponsAdmin />}
           {tab === 'settings' && <SettingsAdmin />}
+          {tab === 'automation' && <AutomationAdmin />}
         </>}
     </div>
   </>;

@@ -1,0 +1,11 @@
+{
+  "eventId": "48641101-0000-4000-8000-000000000003",
+  "eventType": "order.status_changed",
+  "schemaVersion": 1,
+  "occurredAt": "2026-01-01T12:00:00.000Z",
+  "businessId": "default",
+  "resourceId": "Z-0123456789ABCDEF0123",
+  "payload": {
+    "status": "ready_for_pickup"
+  }
+}
