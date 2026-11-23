@@ -6,6 +6,10 @@ From the repository root, install with `npm ci`, then run `npm run typecheck` an
 
 Verify the compiled API separately with `npm run start:api`. Start `npm run preview:web` to check the built frontend and its local API proxy. For an environment override check, set `PORT` in the root `.env` and the matching `API_PROXY_TARGET` in `apps/web/.env.local`. Check both direct and proxied requests after restarting. See [implementation status](IMPLEMENTATION_STATUS.md) for the latest results.
 
+## Storefront browser checks
+
+Install Chromium once with `npx playwright install chromium`, then run `npm run test:web` from the root. Set `PLAYWRIGHT_CHROME_PATH` to use an existing Chrome executable. The suite starts a separate development server with synthetic contact settings and exercises desktop and mobile routing, keyboard interaction, Sinhala persistence, catalogue filters, product options, and information pages.
+
 ## Planned test coverage
 
 | Tool | Planned use |

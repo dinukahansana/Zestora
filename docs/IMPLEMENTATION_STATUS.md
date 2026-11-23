@@ -14,6 +14,17 @@
 
 The starter page and health endpoint are the two implemented features. MongoDB Atlas, Cloudinary, PayHere, n8n, AI, authentication, ordering, and deployment configuration remain for their roadmap milestones.
 
+## Phase 1
+
+| Area | Status |
+| --- | --- |
+| Storefront | Responsive homepage, navigation, demo menu, product pages, About, Gallery, Contact, FAQ, and four policy previews. |
+| Locales | English and Sinhala resources, bilingual products, persistent language choice, and Sinhala fonts. |
+| Catalogue | Six clearly labeled demo products with sharing-friendly search, sorting, and filters. Product pages show size, add-on, and quantity previews. |
+| Media | Eight original, optimized WebP product and lifestyle images. |
+| Contact | Shop contact channels and email-draft form work with public business settings. A live shop supplies its own contact information and approved policies. |
+| Checks | TypeScript, both production builds, and six Chromium browser scenarios passed. Reviewed desktop and mobile homepage layouts. |
+
 ## Next milestone
 
-Phase 1 begins with the visual design system, responsive navigation, and English/Sinhala translation resources. Use those pieces to build the customer homepage, followed by menu, product, and supporting pages.
+Phase 2 connects Express to MongoDB, defines catalogue data and validation, adds authentication and authorization, exposes product and category endpoints, and switches the storefront to the API when configured.

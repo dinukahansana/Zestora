@@ -1,0 +1,167 @@
+{
+  "nav": {
+    "home": "Home",
+    "menu": "Menu",
+    "about": "About",
+    "gallery": "Gallery",
+    "contact": "Contact",
+    "faq": "FAQ",
+    "primary": "Main navigation",
+    "open": "Open menu",
+    "close": "Close menu",
+    "skip": "Skip to content",
+    "language": "Language",
+    "order": "Explore the menu"
+  },
+  "common": {
+    "brand": "Zestora",
+    "loading": "Loading…",
+    "tagline": "Freshness in Every Sip.",
+    "from": "From {{price}}",
+    "available": "Available",
+    "soldOut": "Sold out",
+    "backMenu": "Back to menu",
+    "demo": "Demo catalogue",
+    "demoDetails": "Product listings, prices, and availability are for demonstration.",
+    "backHome": "Back to home"
+  },
+  "home": {
+    "heroFirst": "Freshness in",
+    "heroLast": "Every Sip.",
+    "heroDescription": "Tropical juices, thick smoothies, and fruit bowls for the days that call for something fresh.",
+    "heroAlt": "Mango and berry drinks surrounded by fresh tropical fruit",
+    "storyLink": "Meet Zestora",
+    "categories": "Find your favourites",
+    "featured": "Featured from the menu",
+    "featuredText": "Start with bright, familiar flavours and our favourite combinations.",
+    "viewAll": "View full menu",
+    "story": "Good fruit. Good company.",
+    "storyText": "Zestora takes inspiration from Sri Lanka’s tropical fruit and the small rituals that make a day feel a little better.",
+    "fruit": "Fruit-forward recipes",
+    "choices": "Sizes and add-ons",
+    "local": "Tropical flavours",
+    "seasonal": "Try the seasonal special",
+    "seasonalText": "Passionfruit and orange make a bright, tangy pair in our seasonal cooler.",
+    "seasonalAction": "Explore the cooler",
+    "popular": "Popular picks",
+    "popularText": "A sample of favourites for different tastes.",
+    "gallery": "A closer look",
+    "galleryAction": "See the gallery",
+    "testimonials": "What a visit could feel like",
+    "testimonialLabel": "Demonstration testimonials",
+    "quoteOne": "The mango juice tastes like the best part of a ripe mango.",
+    "quoteTwo": "I’d bring a friend for a smoothie and share a fruit bowl.",
+    "questions": "Questions about Zestora?",
+    "contactAction": "Get in touch"
+  },
+  "menu": {
+    "title": "The menu",
+    "description": "Find a favourite by flavour, category, or price.",
+    "search": "Search the menu",
+    "placeholder": "Try mango or lime",
+    "category": "Category",
+    "all": "All categories",
+    "sort": "Sort by",
+    "recommended": "Featured first",
+    "low": "Price, low to high",
+    "high": "Price, high to low",
+    "az": "Name",
+    "none": "No products match your search.",
+    "reset": "Clear filters",
+    "count_one": "{{count}} product",
+    "count_other": "{{count}} products"
+  },
+  "product": {
+    "ingredients": "Ingredients",
+    "options": "Make it yours",
+    "size": "Size",
+    "addOns": "Optional add-ons",
+    "noAddOns": "This item has no add-ons.",
+    "quantity": "Quantity",
+    "total": "Preview total",
+    "preview": "Explore these demo options and their estimated prices.",
+    "related": "You might also like",
+    "missing": "Product unavailable",
+    "missingText": "This product could not be found in the menu."
+  },
+  "about": {
+    "title": "About Zestora",
+    "intro": "A fresh take on the juice bar, inspired by the fruit we grew up with.",
+    "story": "From island fruit to your glass",
+    "text": "The Zestora concept brings juices, smoothies, milkshakes, and fruit bowls into one menu shaped by tropical flavours and simple ingredients.",
+    "values": "What guides the menu",
+    "counterAlt": "Fresh mango and citrus being prepared on a juice bar counter"
+  },
+  "gallery": {
+    "title": "Gallery",
+    "intro": "A look at the drinks, bowls, and fruit that inspire Zestora.",
+    "close": "Close photo",
+    "open": "Open {{name}} photo"
+  },
+  "contact": {
+    "title": "Contact",
+    "intro": "Get in touch about the menu, an order, or bringing Zestora to your business.",
+    "details": "Shop information",
+    "pending": "Contact details will appear when the shop is configured.",
+    "address": "Address",
+    "phone": "Phone",
+    "email": "Email",
+    "hours": "Opening hours",
+    "map": "Open in Google Maps",
+    "whatsapp": "WhatsApp",
+    "instagram": "Instagram",
+    "facebook": "Facebook",
+    "form": "Write a message",
+    "name": "Your name",
+    "message": "Message",
+    "openEmail": "Open email draft",
+    "formHint": "Your email app will open with a draft for you to review and send.",
+    "subject": "Message for Zestora",
+    "nameError": "Enter a name between 2 and 100 characters.",
+    "emailError": "Enter a valid email address.",
+    "messageError": "Enter a message between 10 and 1500 characters."
+  },
+  "faq": {
+    "title": "Frequently asked questions",
+    "intro": "Find answers about the demo menu and Zestora.",
+    "oneQ": "Where can I check ingredients?",
+    "oneA": "Open a product from the menu to see its ingredients and available options. Ask the shop directly if you have an allergy or dietary concern.",
+    "twoQ": "Can I order online?",
+    "twoA": "You can browse the demo menu and preview choices. Checkout will become available when an ordering system and shop settings are connected.",
+    "threeQ": "How can I switch to Sinhala?",
+    "threeA": "Use the language control in the header. The site remembers your choice on this browser.",
+    "fourQ": "Are the menu prices final?",
+    "fourA": "The displayed prices are for the demo. A participating shop will set its own products, prices, and fulfilment options."
+  },
+  "footer": {
+    "explore": "Explore",
+    "help": "Help and policies",
+    "contact": "Contact",
+    "copyright": "© {{year}} Zestora",
+    "demo": "Zestora storefront demonstration"
+  },
+  "policy": {
+    "demo": "Policy preview",
+    "notice": "The business owner must publish the shop’s approved policy before accepting live orders.",
+    "privacy": {
+      "title": "Privacy policy",
+      "text": "The storefront saves your language preference in this browser. If you choose to email a shop, your email service handles that message. The shop’s privacy policy will describe customer data handling when ordering is enabled."
+    },
+    "terms": {
+      "title": "Terms and conditions",
+      "text": "The demo shows example items and prices. Each shop can set its own terms for products, ordering, payment, delivery, and pickup."
+    },
+    "refunds": {
+      "title": "Refund policy",
+      "text": "A shop’s approved refund policy will explain eligibility, how to make a request, and how the shop handles a refund after it is approved."
+    },
+    "cancellation": {
+      "title": "Cancellation policy",
+      "text": "A shop’s approved cancellation policy will explain when a customer can request a cancellation and how to contact the shop about an order."
+    }
+  },
+  "notFound": {
+    "title": "Page not found",
+    "text": "Check the address or return to the homepage."
+  }
+}

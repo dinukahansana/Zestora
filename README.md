@@ -2,7 +2,7 @@
 
 **Freshness in Every Sip.**
 
-Zestora is a configurable ordering and business management platform for juice bars and other beverage shops. The roadmap covers an English/Sinhala storefront, an admin dashboard, payments, and AI-assisted workflows.
+Zestora is a configurable ordering and business management platform for juice bars and other beverage shops. It has an English/Sinhala storefront with a demo catalogue. The roadmap also covers ordering, administration, payments, and AI-assisted workflows.
 
 ## Run locally
 
@@ -13,7 +13,7 @@ npm ci
 npm run dev
 ~~~
 
-Open [the web starter](http://127.0.0.1:5173). Its **API health** link reaches Express through the Vite proxy. The direct endpoint is [GET /api/health](http://127.0.0.1:3001/api/health). Press Ctrl+C to stop both development servers.
+Open [the storefront](http://127.0.0.1:5173). Express exposes [GET /api/health](http://127.0.0.1:3001/api/health), also reachable [through Vite](http://127.0.0.1:5173/api/health). Press Ctrl+C to stop both development servers.
 
 The default configuration works without environment files. To override the API address, copy the root `.env.example` to `.env` and update `HOST` or `PORT`. Copy `apps/web/.env.example` to `apps/web/.env.local` and set `API_PROXY_TARGET` to the corresponding address. Restart both servers after changing settings.
 
@@ -23,8 +23,9 @@ The default configuration works without environment files. To override the API a
 | `npm run dev:api` | Start Express in watch mode. |
 | `npm run typecheck` | Check TypeScript in both apps. |
 | `npm run build` | Build the frontend and compile the API. |
+| `npm run test:web` | Run the storefront Playwright tests after installing a Chromium browser. |
 | `npm run start:api` | Run the compiled API after building. |
-| `npm run preview:web` | Serve the frontend build locally. Run the API separately for the health link. |
+| `npm run preview:web` | Serve the frontend build locally. Run the API separately for the proxied health endpoint. |
 
 ## Repository layout
 
@@ -37,4 +38,4 @@ The default configuration works without environment files. To override the API a
 
 Zestora uses a monorepo. Both apps live in one Git repository and npm installs their dependencies from the root using one lockfile. Each app declares the packages it uses and has its own development and build command.
 
-For the next session, start with [project context](docs/PROJECT_CONTEXT.md) and [implementation status](docs/IMPLEMENTATION_STATUS.md), then review the [architecture](docs/ARCHITECTURE.md) and [Git workflow](docs/GIT_WORKFLOW.md).
+For the next session, start with [project context](docs/PROJECT_CONTEXT.md) and [implementation status](docs/IMPLEMENTATION_STATUS.md), then review the [architecture](docs/ARCHITECTURE.md), [storefront guide](docs/STOREFRONT.md), and [Git workflow](docs/GIT_WORKFLOW.md).

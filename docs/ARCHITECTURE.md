@@ -2,7 +2,7 @@
 
 ## Current system
 
-The repository has two npm workspaces. `apps/web` serves the React UI through Vite. `apps/api` defines the Express application in `src/app.ts` and starts the listener in `src/server.ts`. Separating the app from the listener makes the routes easier to test later.
+The repository has two npm workspaces. `apps/web` serves the bilingual React storefront through Vite. React Router matches storefront paths and i18next resolves interface and language preference settings. The current catalogue is explicitly labeled demonstration data. See [storefront](STOREFRONT.md). `apps/api` defines the Express application in `src/app.ts` and starts the listener in `src/server.ts`. Separating the app from the listener makes the routes easier to test later.
 
 ~~~mermaid
 flowchart LR

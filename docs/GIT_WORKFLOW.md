@@ -14,7 +14,7 @@ git remote -v
 
 Read untracked files separately because `git diff` only shows tracked changes. Run the relevant checks and confirm that local environment files, dependencies, and build outputs are ignored. Stage explicit paths after reviewing new files, then inspect `git diff --cached --check` and `git diff --cached`.
 
-Use a short Conventional Commit message for each milestone, for example `chore: scaffold Zestora monorepo`. Use a focused feature branch when a change needs review or isolation. Push to the intended branch only after the project owner's explicit approval. Windows uses browser-based Git Credential Manager if GitHub asks for authentication.
+Use a short Conventional Commit message for each milestone, for example `chore: scaffold Zestora monorepo`. Use a focused feature branch when a change needs review or isolation. The project owner has authorized commits and pushes to `main` for completed, verified phases. Stage only the phase files, inspect the staged diff for secrets, use a normal fast-forward push, and confirm that GitHub has the resulting commit. Windows uses browser-based Git Credential Manager if GitHub asks for authentication.
 
 ## Phase 0 commit commands
 
@@ -28,4 +28,4 @@ git diff --cached
 git commit -m "chore: scaffold Zestora monorepo"
 ~~~
 
-After explicit push approval, publish the commit with `git push origin main`.
+Phase 0 was published with `git push origin main` after the owner approved its first push. The same command publishes subsequent verified phase commits under the standing authorization.

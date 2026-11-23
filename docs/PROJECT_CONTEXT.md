@@ -20,8 +20,8 @@ Use the confirmed stack unless a technical constraint calls for a change. Explai
 
 ## How we work
 
-Develop one milestone at a time. Inspect the code and Git status, explain the planned change, build it, run checks, and update the documentation. Explain major concepts in plain English using real Zestora examples, including where the feature lives, how it works, and what matters for security and performance. Ask before pushing to GitHub.
+Develop one milestone at a time. Inspect the code and Git status, explain the planned change, build it, run checks, and update the documentation. Explain major concepts in plain English using real Zestora examples, including where the feature lives, how it works, and what matters for security and performance. The owner authorized local commits and GitHub pushes to `main` for each verified phase. Report the commit, push result, and learning notes after each phase.
 
 Each session should start with this document and [implementation status](IMPLEMENTATION_STATUS.md). Read the relevant feature documents before editing and leave the repository with an updated progress record and a clear next task.
 
-Phase 0 establishes separate frontend and API workspaces, a health endpoint, and project documentation. See [implementation status](IMPLEMENTATION_STATUS.md) for what has been verified and what comes next.
+Phase 0 established separate frontend and API workspaces, a health endpoint, and project documentation. Phase 1 builds the bilingual storefront and demo catalogue. See [implementation status](IMPLEMENTATION_STATUS.md) for what has been verified and what comes next.

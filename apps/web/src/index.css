@@ -1,20 +1,76 @@
-:root {
-  color: #183220;
-  background: #f7f9f2;
-  font-family: system-ui, sans-serif;
-  line-height: 1.5;
+@import "tailwindcss";
+
+@theme {
+  --color-cream: #faf8f0;
+  --color-paper: #fffdf7;
+  --color-ink: #153a29;
+  --color-forest: #173b2a;
+  --color-muted: #4d6055;
+  --color-line: #dce2d5;
+  --color-moss: #deebd7;
+  --color-lime: #d5ec93;
+  --color-sun: #fbc879;
+  --color-blush: #f5dfd9;
+  --font-sans: 'Manrope Variable', sans-serif;
+  --font-display: 'DM Serif Display', Georgia, serif;
 }
 
-body {
-  margin: 0;
+@layer base {
+  body {
+    @apply bg-cream font-sans text-ink antialiased;
+  }
+
+  :lang(si) {
+    --font-sans: 'Noto Sans Sinhala', sans-serif;
+    --font-display: 'Noto Sans Sinhala', sans-serif;
+  }
+
+  :focus-visible {
+    outline: 3px solid #39734e;
+    outline-offset: 4px;
+  }
 }
 
-main {
-  max-width: 40rem;
-  margin-inline: auto;
-  padding: 4rem 1.5rem;
+@layer components {
+  .container-wide {
+    @apply mx-auto w-full max-w-7xl px-5 sm:px-8 lg:px-12;
+  }
+
+  .section-space {
+    @apply py-14 sm:py-19;
+  }
+
+  .display-title {
+    @apply font-display text-4xl leading-[1.12] tracking-tight sm:text-5xl;
+  }
+
+  .button {
+    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-extrabold transition-colors;
+  }
+
+  .button-primary {
+    @apply bg-forest text-white hover:bg-[#28553c];
+  }
+
+  .button-light {
+    @apply bg-lime text-ink hover:bg-[#e5f5b0];
+  }
+
+  .button-outline {
+    @apply border border-current hover:bg-moss/25;
+  }
+
+  .field {
+    @apply w-full rounded-xl border border-line bg-paper px-3.5 py-2.5 text-ink;
+  }
 }
 
-a {
-  color: #235b35;
+.store-hero-photo {
+  min-height: 21rem;
+}
+
+@media (min-width: 1024px) {
+  .store-hero-photo {
+    min-height: 34rem;
+  }
 }

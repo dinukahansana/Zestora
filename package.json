@@ -18,7 +18,8 @@
     "typecheck": "npm run typecheck --workspaces",
     "build": "npm run build --workspaces",
     "start:api": "npm run start --workspace @zestora/api",
-    "preview:web": "npm run preview --workspace @zestora/web"
+    "preview:web": "npm run preview --workspace @zestora/web",
+    "test:web": "npm run test:e2e --workspace @zestora/web"
   },
   "devDependencies": {
     "concurrently": "^10.0.7"
