@@ -38,6 +38,7 @@ export function OrderDetails({ order }: { order: Order }) {
     <section className="rounded-2xl border border-line bg-paper p-5 sm:p-7">
       <p className="text-sm font-bold">{t('commerce.reference')}</p>
       <p className="break-words text-xl font-extrabold">{order.reference}</p>
+      {order.paymentEnvironment && order.paymentEnvironment !== 'live' && <p className="mt-2 text-sm font-bold text-muted">{t(`payment.${order.paymentEnvironment}`)}</p>}
       <dl className="mt-4 grid gap-2 text-sm sm:grid-cols-2">
         <div><dt className="font-extrabold">{t('commerce.orderStatus')}</dt><dd>{t(`orderStatus.${order.orderStatus}`)}</dd></div>
         <div><dt className="font-extrabold">{t('commerce.paymentStatus')}</dt><dd>{t(`paymentStatus.${order.paymentStatus}`)}</dd></div>

@@ -13,6 +13,7 @@ const NotFoundPage = lazy(() => import('./pages/Information').then(module => ({ 
 const PolicyPage = lazy(() => import('./pages/Information').then(module => ({ default: module.PolicyPage })));
 const ContactPage = lazy(() => import('./pages/Contact'));
 
+const PaymentResultPage = lazy(() => import('./pages/Payment'));
 const AdminPage = lazy(() => import('./pages/Admin'));
 const CartPage = lazy(() => import('./pages/CartCheckout').then(module => ({ default: module.CartPage })));
 const CheckoutPage = lazy(() => import('./pages/CartCheckout').then(module => ({ default: module.CheckoutPage })));
@@ -39,6 +40,7 @@ export function App() {
           <Route path="cancellation" element={<PolicyPage policy="cancellation" />} />
           <Route path="admin" element={<LiveOrdering><AdminPage /></LiveOrdering>} />
           <Route path="cart" element={<LiveOrdering><CartPage /></LiveOrdering>} />
+          <Route path="payment-result" element={<LiveOrdering><PaymentResultPage /></LiveOrdering>} />
           <Route path="checkout" element={<LiveOrdering><CheckoutPage /></LiveOrdering>} />
           <Route path="order-confirmation" element={<LiveOrdering><ConfirmationPage /></LiveOrdering>} />
           <Route path="track" element={<LiveOrdering><TrackingPage /></LiveOrdering>} />

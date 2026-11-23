@@ -104,6 +104,7 @@ export function CheckoutPage() {
   const [chosenFulfillment, setChosenFulfillment] = useState<'pickup' | 'delivery'>();
   const [zoneId, setZoneId] = useState('');
   const [address, setAddress] = useState('');
+  const [payment, setPayment] = useState<'cash' | 'payhere'>('cash');
   const [couponCode, setCouponCode] = useState('');
   const [quote, setQuote] = useState<{ key: string; data: Quote }>();
   const [attempt, setAttempt] = useState<{ request: string; data: z.infer<typeof attemptSchema> }>();
@@ -137,6 +138,9 @@ export function CheckoutPage() {
         fulfillment: type === 'delivery' ? { type, zoneId, address, instructions: value('instructions'), preferredAt } : { type, preferredAt },
         notes: value('notes'),
         expectedTotal: currentQuote.totals.total,
+        payment,
+        billing: payment === 'payhere' ? { address: value('billingAddress'), city: value('billingCity') } : undefined,
+        language,
       };
       const request = JSON.stringify([account.data?.id, body]);
       const current = attempt?.request === request ? attempt.data : await checkoutAttempt(request);
@@ -199,7 +203,17 @@ export function CheckoutPage() {
               <section className="grid gap-4 rounded-2xl border border-line bg-moss/40 p-5 sm:p-7">
                 <h2 className="font-display text-3xl">{t('commerce.summary')}</h2>
                 <label className="grid gap-1 text-sm font-bold">{t('commerce.coupon')}<input className="field" maxLength={32} value={couponCode} onChange={event => setCouponCode(event.target.value)} /></label>
-                <p className="text-sm font-bold">{t(type === 'delivery' ? 'paymentMethod.cash_delivery' : 'paymentMethod.cash_pickup')}</p>
+                {shop.data.paymentEnvironment ? <label className="grid gap-1 text-sm font-bold">{t('commerce.method')}
+                  <select className="field" value={payment} onChange={event => setPayment(event.target.value === 'payhere' ? 'payhere' : 'cash')}>
+                    <option value="cash">{t(type === 'delivery' ? 'paymentMethod.cash_delivery' : 'paymentMethod.cash_pickup')}</option>
+                    <option value="payhere">{t('paymentMethod.payhere')}</option>
+                  </select>
+                </label> : <p className="text-sm font-bold">{t(type === 'delivery' ? 'paymentMethod.cash_delivery' : 'paymentMethod.cash_pickup')}</p>}
+                {payment === 'payhere' && <div className="grid gap-2">
+                  {shop.data.paymentEnvironment !== 'live' && <p className="text-sm font-bold">{t(`payment.${shop.data.paymentEnvironment}`)}</p>}
+                  <label className="grid gap-1 text-sm font-bold">{t('payment.billingAddress')}<input className="field" name="billingAddress" minLength={8} maxLength={350} required /></label>
+                  <label className="grid gap-1 text-sm font-bold">{t('payment.city')}<input className="field" name="billingCity" minLength={2} maxLength={100} required /></label>
+                </div>}
                 {currentQuote && <div aria-live="polite"><TotalsTable totals={currentQuote.totals} /></div>}
                 <RequestError error={error} />
                 <button type="submit" className="button button-primary disabled:opacity-60" disabled={pending || (!shop.data.pickupEnabled && !shop.data.deliveryEnabled)}>

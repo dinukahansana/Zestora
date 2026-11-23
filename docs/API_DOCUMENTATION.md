@@ -75,3 +75,16 @@ All routes under `/api/admin` require an administrator session. Unauthenticated 
 | `GET /admin/audit` | Last 100 administrative actions. |
 
 `GET /api/shop/storefront` returns public brand and contact settings. Checkout settings and public presentation are read from the same shop record.
+
+## Online payments
+
+Checkout accepts `payment: "cash" | "payhere"`, optional `language`, and `billing: { address, city }` for PayHere. Cash remains the default. `GET /api/shop/checkout` advertises an available `paymentEnvironment`.
+
+| Method and path | Purpose |
+| --- | --- |
+| `POST /api/payments/payhere/start` | Send `{ reference, key? }`. An order owner receives gateway form fields generated from the stored order, or the development simulator mode. |
+| `POST /api/payments/payhere/notify` | PayHere sends a URL-encoded signed notification. Invalid signatures and amount mismatches leave order state unchanged. Repeated valid notifications preserve the original settlement time. |
+| `POST /api/payments/status` | Send `{ reference, key? }` to read the database-backed payment state. |
+| `POST /api/payments/simulate` | For development only. Add `outcome: "paid" | "failed"` to the access details. The order remains marked as a simulated payment. |
+
+Signed-in customers can pay and read their orders from their own account. Guest orders use the dedicated guest tracking key. A gateway redirect shows status from this API.

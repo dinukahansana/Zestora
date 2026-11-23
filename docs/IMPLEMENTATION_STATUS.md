@@ -56,6 +56,15 @@ The starter page and health endpoint are the two implemented features. MongoDB A
 | Security | Admin-only writes and image uploads. Mutations save audit records, and images are validated and re-encoded before provider calls. |
 | Verification | Seventeen API tests, four database-backed browser cases, six storefront browser cases, type checks, and both builds. Cloudinary upload behavior was tested against a captured provider interface. |
 
+## Phase 5
+
+| Area | Status |
+| --- | --- |
+| PayHere | Server-generated hosted checkout forms, signed callback verification, stored payment state, idempotent settlement, chargeback handling, and a verified-status return page. |
+| Simulator | Development-only browser flow for decline and success. Test payments are marked and excluded from real revenue. |
+| Notifications | Localized SMTP receipts and order updates, one persisted email job per order event, and failure tracking. |
+| Verification | Twenty API tests, five database-backed browser tests, type checking, and both builds. PayHere callbacks used synthetic test credentials. The external sandbox and real SMTP tests require service configuration. |
+
 ## Next milestone
 
-Phase 5 adds PayHere sandbox checkout, verified server callbacks, payment persistence, and customer notifications.
+Phase 6 adds the transactional outbox, signed delivery to n8n, retry handling, and workflow monitoring.

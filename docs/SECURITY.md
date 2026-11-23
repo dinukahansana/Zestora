@@ -16,6 +16,8 @@
 
 - Admin mutations check the user role and save an audit record. Image uploads require admin authorization, a bounded payload and dimensions, and decoder validation. The API strips original metadata by writing a fresh WebP.
 
+- PayHere payment responses are verified on the API against the merchant, signature, order amount, currency, and environment. The receipt page reads server state. Sandbox and simulator outcomes are labeled and excluded from live revenue.
+
 ## Implementation requirements
 
 - Hash passwords, use secure sessions and role-based authorization, and use a secure setup process for the initial administrator. Require guest order verification.

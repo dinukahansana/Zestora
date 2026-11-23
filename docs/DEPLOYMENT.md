@@ -9,6 +9,6 @@ Phase 0 runs locally. Choose hosting in the deployment milestone after verifying
 - Set frontend API routing on the host. The Vite proxy is for development and local preview.
 - Configure production credentials using each provider's secret settings. Prepare database connectivity and required indexes, scoped Cloudinary access, HTTPS, approved frontend origins, and secure session settings as those features are introduced.
 - Set n8n credentials and webhook signing settings. Verify payloads, status notifications, and retry behavior before enabling workflows.
-- Use PayHere sandbox first and check callback URLs, server-side checksum validation, and duplicate handling. Live mode requires merchant credentials, registered callback URLs, and approval.
+- Use the PayHere sandbox for external testing with a registered site and a public HTTPS callback. See [PayHere setup](PAYHERE_SETUP.md) for variables and validation. Keep live mode disabled until merchant approval and verified setup.
 
 The production review includes security and performance, mobile layouts, integration tests, monitoring, backup and rollback procedures, and documentation.

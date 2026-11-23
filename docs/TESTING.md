@@ -22,6 +22,10 @@ Run `npm run test:shop` with Chromium. The suite starts Vite, Express, and a tem
 
 `npm run test:api` covers admin roles, public publication, cash and status transitions, audit records, low stock, database revenue, configurable fees and branding, and image normalization. The browser shop suite covers admin sign-in, catalogue manipulation, settings, order confirmation, and print access. The image provider contract is tested with a captured upload. A Cloudinary account is required to verify an external upload.
 
+## Payment tests
+
+The API suite sends synthetic signed and invalid test callbacks to Express. It verifies exact amount matching, duplicate delivery, a chargeback, authorization, simulator isolation, and an SMTP failure. The browser shop suite exercises simulated failure and success. External sandbox callbacks need the approved PayHere configuration and a public endpoint.
+
 ## Planned test coverage
 
 | Tool | Planned use |

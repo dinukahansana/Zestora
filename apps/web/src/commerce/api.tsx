@@ -44,10 +44,13 @@ export interface Address {
   address: string;
 }
 
+export type PaymentEnvironment = 'sandbox' | 'live' | 'simulator';
+
 export interface Shop {
   pickupEnabled: boolean;
   deliveryEnabled: boolean;
   minimumOrder: number;
+  paymentEnvironment?: PaymentEnvironment;
   deliveryZones: { id: string; name: LocalText; fee: number }[];
 }
 
@@ -81,6 +84,7 @@ export interface Order extends Quote {
   orderStatus: string;
   paymentStatus: string;
   paymentMethod: string;
+  paymentEnvironment?: PaymentEnvironment;
   createdAt: string;
 }
 

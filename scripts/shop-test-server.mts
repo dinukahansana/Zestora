@@ -20,7 +20,7 @@ await seed(process.execPath, ['scripts/seed-demo.mts'], { env: { ...process.env,
 await connectDatabase(uri);
 const adminPassword = process.env.ZESTORA_TEST_ADMIN_PASSWORD;
 if (adminPassword) await User.create({ name: 'Browser Owner', email: 'browser-owner@zestora.example', passwordHash: await hashPassword(adminPassword), role: 'admin' });
-const api = createApp(readConfig({ NODE_ENV: 'test', ALLOWED_ORIGINS: origin })).listen(0, host);
+const api = createApp(readConfig({ NODE_ENV: 'test', ALLOWED_ORIGINS: origin, PAYHERE_SIMULATOR: 'true' })).listen(0, host);
 await once(api, 'listening');
 const address = api.address();
 if (!address || typeof address === 'string') throw new Error('Could not start the test API.');

@@ -13,6 +13,7 @@ import { databaseReady } from './database.ts';
 import { errorHandler, HttpError, notFound } from './http.ts';
 import { createMailer, type SendEmail } from './mail.ts';
 import { orderingRouter } from './ordering/routes.ts';
+import { paymentsRouter } from './payments/routes.ts';
 
 export function createApp(
   config: AppConfig,
@@ -54,8 +55,9 @@ export function createApp(
   api.use('/auth', requireDatabase, authRouter(config), passwordResetRouter(config, sendEmail));
   api.use('/account', requireDatabase, profileRouter(config));
   api.use(['/shop/checkout', '/orders'], requireDatabase);
-  api.use(orderingRouter(config));
-  api.use('/admin', requireDatabase, adminRouter(config, uploadImage));
+  api.use(orderingRouter(config, sendEmail));
+  api.use('/payments', requireDatabase, paymentsRouter(config, sendEmail));
+  api.use('/admin', requireDatabase, adminRouter(config, uploadImage, sendEmail));
   api.use('/shop/storefront', requireDatabase);
   api.use(storefrontSettingsRouter);
   api.use(['/catalogue', '/products', '/categories'], requireDatabase);

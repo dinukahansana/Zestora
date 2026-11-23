@@ -360,5 +360,19 @@
     "zones": "Delivery zones",
     "notifications": "Enable notifications",
     "ai": "Enable AI features"
+  },
+  "payment": {
+    "billingAddress": "Billing address",
+    "city": "Billing city",
+    "pay": "Continue to PayHere",
+    "simulator": "Development simulator. No real charge.",
+    "sandbox": "PayHere Sandbox. No real charge.",
+    "simulatedStatus": "Simulated payment status: {{status}}",
+    "simulatePaid": "Simulate success",
+    "simulateFailed": "Simulate failure",
+    "result": "Payment status",
+    "cancelledReturn": "You returned from the gateway before finishing. Check the latest payment status below.",
+    "verifiedByServer": "The status comes from Zestora’s server after it checks the payment notification.",
+    "refresh": "Refresh status"
   }
 }

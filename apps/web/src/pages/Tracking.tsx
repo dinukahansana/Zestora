@@ -3,17 +3,20 @@ import { useTranslation } from 'react-i18next';
 import { Link, useLocation, useSearchParams } from 'react-router';
 import { PageHeading } from '../components/Storefront';
 import { api, RequestError, send, useAccount, type Order } from '../commerce/api';
+import { PaymentAction } from './Payment';
 import { OrderDetails } from '../commerce/Summary';
 import { languageOf } from '../i18n';
 
 export function ConfirmationPage() {
   const { t } = useTranslation();
   const state = useLocation().state as { order?: Order; guestKey?: string } | null;
+  const [updated, setUpdated] = useState<{ reference: string; status: string }>();
+  const order = state?.order && updated?.reference === state.order.reference ? { ...state.order, paymentStatus: updated.status } : state?.order;
   return (
     <>
       <PageHeading title={t('commerce.confirmation')} />
       <div className="container-wide grid max-w-3xl gap-4 py-8">
-        {state?.order && <OrderDetails order={state.order} />}
+        {order && <><OrderDetails order={order} /><PaymentAction order={order} guestKey={state?.guestKey} onStatus={status => setUpdated({ reference: order.reference, status })} /></>}
         {state?.guestKey && <div className="rounded-xl bg-moss p-4">
           <label className="grid gap-2 text-sm font-extrabold">{t('commerce.trackingKey')}
             <input className="field font-mono" readOnly value={state.guestKey} onFocus={event => event.currentTarget.select()} />
@@ -31,6 +34,7 @@ export function TrackingPage() {
   const account = useAccount();
   const [params] = useSearchParams();
   const [order, setOrder] = useState<Order>();
+  const [trackingKey, setTrackingKey] = useState('');
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<unknown>();
 
@@ -46,6 +50,7 @@ export function TrackingPage() {
       const result = key
         ? await send<{ order: Order }>('/orders/track', { reference, key })
         : await api<{ order: Order }>(`/orders/mine/${encodeURIComponent(reference)}`);
+      setTrackingKey(key);
       setOrder(result.order);
     } catch (error) {
       setError(error);
@@ -65,7 +70,7 @@ export function TrackingPage() {
           <button className="button button-primary w-fit" type="submit" disabled={pending}>{t(pending ? 'common.loading' : 'commerce.findOrder')}</button>
         </form>
         <RequestError error={error} />
-        {order && <OrderDetails order={order} />}
+        {order && <><OrderDetails order={order} /><PaymentAction order={order} guestKey={trackingKey || undefined} onStatus={status => setOrder({ ...order, paymentStatus: status })} /></>}
       </div>
     </>
   );

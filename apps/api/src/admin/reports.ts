@@ -10,7 +10,7 @@ const recentStates = ['pending', 'confirmed', 'preparing', 'ready_for_pickup', '
 export async function revenueReport(period: 'day' | 'week' | 'month') {
   const start = new Date(Date.now() - dayMs * (period === 'day' ? 31 : 366));
   return Order.aggregate<{ period: string; revenue: number; paidOrders: number }>([
-    { $match: { paymentStatus: 'paid', orderStatus: { $ne: 'cancelled' }, paidAt: { $gte: start } } },
+    { $match: { paymentStatus: 'paid', orderStatus: { $ne: 'cancelled' }, paymentEnvironment: { $nin: ['simulator', 'sandbox'] }, paidAt: { $gte: start } } },
     { $group: {
       _id: { $dateTrunc: { date: '$paidAt', unit: period, timezone, ...(period === 'week' ? { startOfWeek: 'monday' } : {}) } },
       revenue: { $sum: '$totals.total' }, paidOrders: { $sum: 1 },
@@ -28,7 +28,7 @@ export async function dashboard() {
         total: { $sum: 1 },
         pending: { $sum: { $cond: [{ $in: ['$orderStatus', recentStates] }, 1, 0] } },
         completed: { $sum: { $cond: [{ $eq: ['$orderStatus', 'completed'] }, 1, 0] } },
-        revenue: { $sum: { $cond: [{ $and: [{ $eq: ['$paymentStatus', 'paid'] }, { $ne: ['$orderStatus', 'cancelled'] }] }, '$totals.total', 0] } },
+        revenue: { $sum: { $cond: [{ $and: [{ $eq: ['$paymentStatus', 'paid'] }, { $ne: ['$orderStatus', 'cancelled'] }, { $not: [{ $in: [{ $ifNull: ['$paymentEnvironment', 'cash'] }, ['simulator', 'sandbox']] }] }] }, '$totals.total', 0] } },
       } },
       { $project: { _id: 0 } },
     ]),

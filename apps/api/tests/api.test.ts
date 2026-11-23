@@ -1,5 +1,5 @@
 import { execFile } from 'node:child_process';
-import { randomBytes, randomUUID } from 'node:crypto';
+import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 import { MongoMemoryReplSet } from 'mongodb-memory-server-core';
@@ -13,6 +13,8 @@ import { productInput, productValues } from '../src/catalogue/schemas.ts';
 import { readConfig } from '../src/config.ts';
 import { connectDatabase, disconnectDatabase } from '../src/database.ts';
 import type { Email } from '../src/mail.ts';
+import { Notification } from '../src/notifications.ts';
+import { Payment } from '../src/payments/models.ts';
 import { Coupon, Order } from '../src/ordering/models.ts';
 
 const run = promisify(execFile);
@@ -342,5 +344,106 @@ describe('administration', () => {
     const response = await user.post('/api/admin/images').set('Content-Type', 'image/png').send(png).expect(201);
     expect(response.body.url).toContain('/zestora/test.webp');
     expect((await sharp(uploaded[0]).metadata()).format).toBe('webp');
+  });
+});
+
+describe('PayHere and notifications', () => {
+  const onlineOrder = () => ({
+    items: [{ ...mango, sizeId: 'regular', quantity: 1, addOnIds: [] }],
+    fulfillment: pickup, customer: buyer, expectedTotal: 690, payment: 'payhere',
+    billing: { address: 'Example billing address', city: 'Colombo' },
+    checkoutKey: randomUUID(), guestKey: guestKey(),
+  });
+
+  test('the approved sandbox contract verifies callbacks and keeps retries idempotent', async () => {
+    const merchant = '12345';
+    const merchantSecret = randomBytes(24).toString('base64url');
+    const sandbox = createApp(readConfig({
+      NODE_ENV: 'test', PAYHERE_MODE: 'sandbox', PAYHERE_MERCHANT_ID: merchant, PAYHERE_MERCHANT_SECRET: merchantSecret,
+      PAYHERE_NOTIFY_URL: 'https://callbacks.zestora.example/api/payments/payhere/notify',
+    }));
+    const body = onlineOrder();
+    const creation = await request(sandbox).post('/api/orders').send(body).expect(201);
+    const reference = creation.body.order.reference;
+    expect(creation.body.order).toMatchObject({ paymentMethod: 'payhere', paymentEnvironment: 'sandbox', paymentStatus: 'pending' });
+    expect(creation.body.order).not.toHaveProperty('billing');
+    const access = { reference, key: body.guestKey };
+    await request(sandbox).post('/api/payments/payhere/start').send({ reference, key: guestKey() }).expect(404);
+    const start = await request(sandbox).post('/api/payments/payhere/start').send(access).expect(200);
+    const digest = (value: string) => createHash('md5').update(value).digest('hex').toUpperCase();
+    const expected = digest(merchant + reference + '690.00LKR' + digest(merchantSecret));
+    expect(start.body).toMatchObject({
+      action: 'https://sandbox.payhere.lk/pay/checkout',
+      fields: { order_id: reference, amount: '690.00', currency: 'LKR', hash: expected },
+    });
+    expect(start.text).not.toContain(merchantSecret);
+    const current = await request(sandbox).post('/api/payments/status').send(access).expect(200);
+    expect(current.body.status).toBe('pending');
+
+    function callback(code: string, amount = '690.00') {
+      return {
+        merchant_id: merchant, order_id: reference, payment_id: 'EXAMPLE-PAYHERE-1',
+        payhere_amount: amount, payhere_currency: 'LKR', status_code: code,
+        md5sig: digest(merchant + reference + amount + 'LKR' + code + digest(merchantSecret)),
+      };
+    }
+
+    const sendCallback = (body: Record<string, string>) => request(sandbox).post('/api/payments/payhere/notify').type('form').send(body);
+    await sendCallback({ ...callback('2'), md5sig: '0'.repeat(32) }).expect(403);
+    await sendCallback(callback('2', '691.00')).expect(409);
+    await sendCallback(callback('2')).expect(200);
+    const settled = await Payment.findOne({ orderReference: reference });
+    expect(settled?.status).toBe('paid');
+    expect(settled?.paidAt).toBeDefined();
+    await sendCallback(callback('2')).expect(200);
+    await sendCallback(callback('0')).expect(200);
+    await sendCallback(callback('-2')).expect(200);
+    const repeated = await Payment.findOne({ orderReference: reference });
+    expect(repeated?.paidAt).toEqual(settled?.paidAt);
+    expect(repeated?.status).toBe('paid');
+    await sendCallback(callback('-3')).expect(200);
+    const refunded = await request(sandbox).post('/api/payments/status').send(access).expect(200);
+    expect(refunded.body.status).toBe('refunded');
+    expect(await Payment.countDocuments({ orderReference: reference })).toBe(1);
+  });
+
+  test('the simulator is isolated from production and requires order access', async () => {
+    const simulator = createApp(readConfig({ NODE_ENV: 'test', PAYHERE_SIMULATOR: 'true' }));
+    const production = createApp(readConfig({ NODE_ENV: 'production', PAYHERE_SIMULATOR: 'true' }));
+    const body = onlineOrder();
+    await request(production).post('/api/orders').send(body).expect(400);
+    await request(production).post('/api/payments/simulate').send({}).expect(404);
+    const created = await request(simulator).post('/api/orders').send(body).expect(201);
+    const reference = created.body.order.reference;
+    await request(simulator).post('/api/payments/simulate').send({ reference, key: guestKey(), outcome: 'paid' }).expect(404);
+    const failed = await request(simulator).post('/api/payments/simulate').send({ reference, key: body.guestKey, outcome: 'failed' }).expect(200);
+    expect(failed.body).toMatchObject({ environment: 'simulator', status: 'failed' });
+    const paid = await request(simulator).post('/api/payments/simulate').send({ reference, key: body.guestKey, outcome: 'paid' }).expect(200);
+    expect(paid.body).toMatchObject({ environment: 'simulator', status: 'paid' });
+    const admin = request.agent(simulator);
+    await admin.post('/api/auth/login').send({ email: demoEmail, password }).expect(200);
+    const report = await admin.get('/api/admin/dashboard').expect(200);
+    expect(report.body.metrics.revenue).toBe(1940);
+  });
+
+  test('order and status email jobs are deduplicated and mail failure preserves the order', async () => {
+    const messages: Email[] = [];
+    const mailApp = createApp(config, async message => {
+      messages.push(message);
+      if (messages.length === 1) throw new Error('Test mail delivery failure');
+    });
+    const body = { ...onlineOrder(), payment: 'cash', billing: undefined, language: 'si' };
+    const created = await request(mailApp).post('/api/orders').send(body).expect(201);
+    const reference = created.body.order.reference;
+    await vi.waitFor(async () => expect((await Notification.findOne({ key: reference + ':created' }))?.status).toBe('failed'));
+    await request(mailApp).post('/api/orders').send(body).expect(200);
+    expect(messages).toHaveLength(1);
+    const admin = request.agent(mailApp);
+    await admin.post('/api/auth/login').send({ email: demoEmail, password }).expect(200);
+    await admin.patch('/api/admin/orders/' + reference + '/status').send({ status: 'confirmed' }).expect(200);
+    await vi.waitFor(async () => expect((await Notification.findOne({ key: reference + ':confirmed' }))?.status).toBe('sent'));
+    expect(messages).toHaveLength(2);
+    expect(messages[1].text).toContain(reference);
+    expect(messages[1].subject).toMatch(/තහවුරු/);
   });
 });

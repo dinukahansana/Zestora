@@ -7,6 +7,8 @@ import { Category, Product } from '../catalogue/models.ts';
 import { categoryInput, productInput, productValues, slugSchema } from '../catalogue/schemas.ts';
 import type { AppConfig } from '../config.ts';
 import { HttpError, parseInput } from '../http.ts';
+import type { SendEmail } from '../mail.ts';
+import { deliverNotice, prepareNotice } from '../notifications.ts';
 import { Coupon, Order, orderStates, Shop, type OrderRecord, type OrderState } from '../ordering/models.ts';
 import { orderView } from '../ordering/routes.ts';
 import { codeSchema, orderReference } from '../ordering/schemas.ts';
@@ -59,7 +61,7 @@ function missing(entity: string): never {
   throw new HttpError(404, 'ADMIN_NOT_FOUND', `${entity} was not found.`);
 }
 
-export function adminRouter(config: AppConfig, uploadImage?: UploadImage) {
+export function adminRouter(config: AppConfig, uploadImage?: UploadImage, sendEmail?: SendEmail) {
   const router = Router();
   const sessions = sessionAccess(config);
   router.use(async (request, response, next) => {
@@ -150,26 +152,32 @@ export function adminRouter(config: AppConfig, uploadImage?: UploadImage) {
   router.patch('/orders/:reference/status', async (request, response) => {
     const reference = parseInput(orderReference, request.params.reference);
     const { status } = parseInput(z.strictObject({ status: z.enum(orderStates) }), request.body);
-    const order = await mutation(response, 'status_changed', 'order', reference, async session => {
+    const result = await mutation(response, 'status_changed', 'order', reference, async session => {
       const record = await Order.findOne({ reference }).session(session) ?? missing('Order');
       if (!allowedTransition(record, status)) throw new HttpError(409, 'INVALID_TRANSITION', 'This order status change is unavailable.');
       record.orderStatus = status;
-      return record.save({ session });
+      await record.save({ session });
+      const key = status === 'pending' ? undefined : await prepareNotice(record, status, session, sendEmail);
+      return { order: record, key };
     });
-    response.json({ order: orderView(order) });
+    void deliverNotice(result.key, sendEmail);
+    response.json({ order: orderView(result.order) });
   });
   router.patch('/orders/:reference/cash-payment', async (request, response) => {
     const reference = parseInput(orderReference, request.params.reference);
-    const order = await mutation(response, 'cash_paid', 'order', reference, async session => {
+    const result = await mutation(response, 'cash_paid', 'order', reference, async session => {
       const record = await Order.findOne({ reference }).session(session) ?? missing('Order');
       if (record.paymentStatus !== 'pending' || record.paymentMethod === 'payhere' || record.orderStatus === 'cancelled') {
         throw new HttpError(409, 'PAYMENT_UNAVAILABLE', 'This cash payment cannot be confirmed.');
       }
       record.paymentStatus = 'paid';
       record.paidAt = new Date();
-      return record.save({ session });
+      await record.save({ session });
+      const key = await prepareNotice(record, 'paid', session, sendEmail);
+      return { order: record, key };
     });
-    response.json({ order: orderView(order) });
+    void deliverNotice(result.key, sendEmail);
+    response.json({ order: orderView(result.order) });
   });
 
   router.get('/customers', async (request, response) => {

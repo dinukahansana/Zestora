@@ -1,4 +1,5 @@
 import { model, Schema, type Types } from 'mongoose';
+import type { PaymentEnvironment } from '../payments/models.ts';
 import type { CheckoutInput, LocalText } from './schemas.ts';
 
 export const orderStates = ['pending', 'confirmed', 'preparing', 'ready_for_pickup', 'out_for_delivery', 'completed', 'cancelled'] as const;
@@ -127,6 +128,9 @@ export interface OrderRecord {
   orderStatus: OrderState;
   paymentStatus: PaymentState;
   paymentMethod: PaymentMethod;
+  paymentEnvironment?: PaymentEnvironment;
+  billing?: CheckoutInput['billing'];
+  language?: 'en' | 'si';
   paidAt?: Date;
   createdAt?: Date;
   updatedAt?: Date;
@@ -151,6 +155,9 @@ const orderSchema = new Schema<OrderRecord>({
   paymentStatus: { type: String, enum: paymentStates, default: 'pending' },
   paymentMethod: { type: String, enum: ['cash_pickup', 'cash_delivery', 'payhere'], required: true },
   paidAt: Date,
+  paymentEnvironment: { type: String, enum: ['sandbox', 'live', 'simulator'] },
+  billing: new Schema({ address: String, city: String }, { _id: false }),
+  language: { type: String, enum: ['en', 'si'], default: 'en' },
 }, { timestamps: true });
 
 orderSchema.index({ orderStatus: 1, createdAt: -1 });

@@ -68,3 +68,23 @@ test('a customer saves an address, places a pickup order, and reorders from hist
   await page.getByRole('button', { name: 'Reorder' }).click();
   await expect(page.getByLabel('Quantity: Golden Mango')).toHaveValue('1');
 });
+
+test('checkout can simulate a PayHere decline and success without a real charge', async ({ page }) => {
+  await startCheckout(page);
+  await page.getByLabel('Your name').fill('Simulator Buyer');
+  await page.getByLabel('Email').fill('simulator@zestora.example');
+  await page.getByLabel('Phone').fill('+94 71 000 0000');
+  await page.getByLabel(/Payment method/).selectOption('payhere');
+  await expect(page.getByText('Development simulator. No real charge.')).toBeVisible();
+  await page.getByLabel('Billing address').fill('Example billing address');
+  await page.getByLabel('Billing city').fill('Colombo');
+  await page.getByRole('button', { name: 'Review total' }).click();
+  await page.getByRole('button', { name: 'Place order' }).click();
+  await expect(page.getByRole('heading', { name: 'Order confirmation' })).toBeVisible();
+  await page.getByRole('button', { name: 'Continue to PayHere' }).click();
+  await page.getByRole('button', { name: 'Simulate failure' }).click();
+  await expect(page.getByText('Simulated payment status: Failed')).toBeVisible();
+  await page.getByRole('button', { name: 'Simulate success' }).click();
+  await expect(page.getByText('Paid', { exact: true })).toBeVisible();
+  await expect(page.getByText('Development simulator. No real charge.')).toBeVisible();
+});

@@ -55,3 +55,13 @@
 | Publication | Archiving a product hides it from the public menu. Earlier orders retain their own product and price snapshots. |
 | Business configuration | Delivery fees and branding are stored with the shop. Changing the fee changes the next server quote, and the website reads the updated brand. |
 | Image upload | The API decodes allowed formats, applies dimension and payload limits, re-encodes the image as WebP, then uploads with server-side Cloudinary credentials. |
+
+## Phase 5
+
+| Concept | Zestora example |
+| --- | --- |
+| Hosted checkout | The API sends PayHere a signed form built from the MongoDB order. Customers enter payment details on the gateway. |
+| Callback | PayHere makes a server-to-server request after processing the payment. Zestora verifies its signature, amount, currency, and order reference before persisting an update. |
+| Verified return | The return page asks Express for the stored status. It can show Pending if the browser returns before the callback arrives. |
+| Idempotent payment | Repeated successful notifications keep the same payment and settlement time. A chargeback updates settlement separately from order fulfilment. |
+| Email job | Each order event has one notification key. A failed mail job is recorded while the order remains available. |

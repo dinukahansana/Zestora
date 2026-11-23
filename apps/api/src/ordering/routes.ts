@@ -5,6 +5,10 @@ import mongoose from 'mongoose';
 import { sessionAccess } from '../auth/routes.ts';
 import type { AppConfig } from '../config.ts';
 import { HttpError, isDuplicateKey, parseInput } from '../http.ts';
+import type { SendEmail } from '../mail.ts';
+import { deliverNotice, prepareNotice } from '../notifications.ts';
+import { Payment } from '../payments/models.ts';
+import { paymentMode } from '../payments/payhere.ts';
 import { Coupon, Order, type OrderRecord } from './models.ts';
 import { checkoutSettings, priceCart } from './pricing.ts';
 import { checkoutInput, orderReference, quoteInput, trackingInput } from './schemas.ts';
@@ -13,11 +17,12 @@ const hash = (value: string) => createHash('sha256').update(value).digest('hex')
 const oneDay = 24 * 60 * 60 * 1000;
 
 export function orderView(order: OrderRecord) {
-  const { reference, customer, fulfillment, notes, items, totals, coupon, orderStatus, paymentStatus, paymentMethod, createdAt } = order;
-  return { reference, customer, fulfillment, notes, items, totals, coupon, orderStatus, paymentStatus, paymentMethod, createdAt };
+  const { reference, customer, fulfillment, notes, items, totals, coupon, orderStatus, paymentStatus, paymentMethod, paymentEnvironment, createdAt } = order;
+  return { reference, customer, fulfillment, notes, items, totals, coupon, orderStatus, paymentStatus, paymentMethod, paymentEnvironment, createdAt };
 }
 
-export function orderingRouter(config: AppConfig) {
+export function orderingRouter(config: AppConfig, sendEmail?: SendEmail) {
+  const mode = paymentMode(config);
   const router = Router();
   const sessions = sessionAccess(config);
   const orderLimit = rateLimit({
@@ -31,7 +36,7 @@ export function orderingRouter(config: AppConfig) {
   });
 
   router.get('/shop/checkout', async (_request, response) => {
-    response.json(await checkoutSettings());
+    response.json({ ...await checkoutSettings(), paymentEnvironment: mode });
   });
   router.post('/orders/quote', orderLimit, async (request, response) => {
     const { items, totals } = await priceCart(parseInput(quoteInput, request.body));
@@ -52,6 +57,10 @@ export function orderingRouter(config: AppConfig) {
       }
     }
 
+    const online = input.payment === 'payhere';
+    if (online && (!mode || !input.billing)) {
+      throw new HttpError(400, 'PAYMENT_UNAVAILABLE', 'Choose cash or provide the information required for PayHere.');
+    }
     const { guestKey, ...orderInput } = input;
     const guestHash = !user && guestKey ? hash(guestKey) : undefined;
     const fingerprint = hash(JSON.stringify([user?._id.toString(), guestHash, orderInput]));
@@ -77,6 +86,7 @@ export function orderingRouter(config: AppConfig) {
         if (input.expectedTotal !== priced.totals.total) {
           throw new HttpError(409, 'TOTAL_CHANGED', 'Review the updated order total.');
         }
+        if (online && priced.totals.total <= 0) throw new HttpError(400, 'PAYMENT_UNAVAILABLE', 'PayHere needs a positive order amount.');
         if (priced.couponRecord) {
           await Coupon.updateOne({ _id: priced.couponRecord._id }, { $inc: { uses: 1 } }, { session });
         }
@@ -92,11 +102,18 @@ export function orderingRouter(config: AppConfig) {
           items: priced.items,
           totals: priced.totals,
           coupon: input.coupon,
-          paymentMethod: input.fulfillment.type === 'delivery' ? 'cash_delivery' : 'cash_pickup',
+          paymentMethod: online ? 'payhere' : input.fulfillment.type === 'delivery' ? 'cash_delivery' : 'cash_pickup',
+          paymentEnvironment: online ? mode : undefined,
+          billing: online ? input.billing : undefined,
+          language: input.language,
         });
-        return order.save({ session });
+        await order.save({ session });
+        if (online) await new Payment({ orderReference: reference, environment: mode, amount: priced.totals.total }).save({ session });
+        const key = await prepareNotice(order, 'created', session, sendEmail);
+        return { order, key };
       });
-      response.status(201).json({ order: orderView(created) });
+      void deliverNotice(created.key, sendEmail);
+      response.status(201).json({ order: orderView(created.order) });
     } catch (error) {
       if (isDuplicateKey(error)) {
         const retry = await existingOrder();

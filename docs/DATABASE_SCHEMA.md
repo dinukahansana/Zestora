@@ -32,3 +32,9 @@ Saved addresses and the current hashed password-reset key live on the user docum
 `stocks` stores a unique item slug, bilingual name, unit, current quantity, and low-stock threshold. `auditlogs` records the actor's user ID, action, entity, reference, and commit timestamp. Administrative database mutations and their audit entry commit together. The shop record also stores public branding and contact fields and switches for notification and AI workflows.
 
 Order fulfilment and payment state stay distinct. A cash payment records `paidAt`. Reports group active paid transactions in the Asia/Colombo time zone. Listing an item in an order snapshots its previous price, so catalogue editing preserves historical totals.
+
+## Payments and notifications
+
+`payments` stores one record per online order reference with environment, amount, currency, state, last gateway status, provider reference, and settlement time. Payment and order status update in one transaction. Sandbox and simulator settlements are excluded from the revenue report.
+
+`notifications` uses a unique order-event key and tracks queued, sending, sent, and failed email jobs. Message bodies contain the order reference and event text. Sends are outside the transaction so unavailable SMTP cannot roll back the order.
