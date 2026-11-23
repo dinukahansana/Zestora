@@ -17,7 +17,7 @@ export class ApiError extends Error {
 
 export async function api<T>(path: string, options: RequestInit = {}): Promise<T> {
   const headers = new Headers(options.headers);
-  if (options.body) headers.set('Content-Type', 'application/json');
+  if (options.body && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
   const response = await fetch(`/api${path}`, { ...options, headers, credentials: 'same-origin' });
   if (!response.ok) {
     const data = await response.json().catch(() => null) as { error?: { code?: string } } | null;
@@ -77,6 +77,7 @@ export interface Order extends Quote {
   reference: string;
   customer: { name: string; email: string; phone: string };
   fulfillment: { type: 'pickup' | 'delivery'; address?: string; zoneId?: string; preferredAt?: string; instructions?: string };
+  notes: string;
   orderStatus: string;
   paymentStatus: string;
   paymentMethod: string;

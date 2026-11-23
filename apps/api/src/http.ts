@@ -34,6 +34,10 @@ export const errorHandler: ErrorRequestHandler = (error: unknown, _request, resp
     response.status(error.status).json({ error: { code: error.code, message: error.message, fields: error.fields } });
     return;
   }
+  if (isDuplicateKey(error)) {
+    response.status(409).json({ error: { code: 'DUPLICATE_RECORD', message: 'That identifier is already in use.' } });
+    return;
+  }
   if (typeof error === 'object' && error !== null && 'type' in error) {
     if (error.type === 'entity.parse.failed') {
       response.status(400).json({ error: { code: 'INVALID_JSON', message: 'Send a valid JSON body.' } });

@@ -14,6 +14,8 @@
 - Checkout recomputes fees and totals on the API. A scoped checkout key deduplicates a repeated order, and MongoDB stores coupon redemption with the order in one transaction.
 - Guest order access requires a separate key stored as a hash. Customer order and address requests check the active account owner. Password reset tokens expire, are single-use, and revoke active sessions.
 
+- Admin mutations check the user role and save an audit record. Image uploads require admin authorization, a bounded payload and dimensions, and decoder validation. The API strips original metadata by writing a fresh WebP.
+
 ## Implementation requirements
 
 - Hash passwords, use secure sessions and role-based authorization, and use a secure setup process for the initial administrator. Require guest order verification.

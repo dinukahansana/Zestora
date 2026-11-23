@@ -55,3 +55,23 @@ Error responses use `{ error: { code, message, fields? } }`. Invalid input uses 
 | `POST /api/auth/reset-password` | Send `{ key, password }`. Consumes the expiring key and revokes existing sessions. Returns 204. |
 
 Checkout recalculates every price and delivery fee. A total change returns `TOTAL_CHANGED` with HTTP 409. A completed checkout keeps an immutable pricing snapshot of each product and option. The guest tracking key is a URL-safe 32-byte random string. The browser retains the key and the API stores its hash. A reference alone cannot retrieve a guest order.
+
+## Administrator workspace
+
+All routes under `/api/admin` require an administrator session. Unauthenticated and customer accounts receive 401 and 403 respectively.
+
+| Routes | Purpose |
+| --- | --- |
+| `GET /admin/dashboard`, `GET /admin/reports?period=day|week|month` | Database-derived counts, paid revenue, recent orders, stock warnings, and product demand. Paths are relative to `/api`. |
+| `GET /admin/catalogue`, `POST /admin/categories`, `PUT /admin/categories/:slug`, `DELETE /admin/categories/:slug` | Read, create, edit, and archive categories. |
+| `POST /admin/products`, `PUT /admin/products/:slug`, `DELETE /admin/products/:slug` | Create, edit, and archive products. Recompute the starting price when sizes change. |
+| `GET /admin/orders`, `GET /admin/orders/:reference` | Search and read orders. List filters include `q`, `status`, and `offset`. |
+| `PATCH /admin/orders/:reference/status`, `PATCH /admin/orders/:reference/cash-payment` | Move through valid fulfilment states or confirm pending cash payment. |
+| `GET /admin/customers`, `GET /admin/customers/:id/orders` | Search customers by name or email and see the selected account's orders. |
+| `GET /admin/inventory`, `PUT /admin/inventory/:slug` | List and save ingredient or item stock, units, and thresholds. |
+| `GET /admin/coupons`, `PUT /admin/coupons/:code` | List and configure coupon expiry, discount rules, limits, and active status. |
+| `GET /admin/settings`, `PUT /admin/settings` | Read and save business presentation, delivery zones, minimum order, and notification and AI preferences. |
+| `POST /admin/images` | Upload raw JPEG, PNG, or WebP bytes. Returns `{ url }` from Cloudinary after re-encoding the image. |
+| `GET /admin/audit` | Last 100 administrative actions. |
+
+`GET /api/shop/storefront` returns public brand and contact settings. Checkout settings and public presentation are read from the same shop record.

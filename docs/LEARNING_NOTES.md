@@ -44,3 +44,14 @@
 | Idempotency | The browser sends a unique checkout key. If a connection drops, an identical retry returns the same order instead of placing another one. |
 | Guest access | A public order reference identifies the order. A separate tracking key proves access. Signed-in customers use their session for their own orders. |
 | Password reset | A time-limited email link carries a single-use key. Resetting the password consumes the key and ends previous sessions. |
+
+## Phase 4
+
+| Concept | Zestora example |
+| --- | --- |
+| Role-based access | Express requires an administrator session on every `/api/admin` route. The dashboard UI also checks the role so customers see an appropriate message. |
+| Audit record | The API saves an action such as cash payment confirmation in the same MongoDB transaction as the data change. |
+| Revenue aggregation | MongoDB groups eligible paid orders by their payment date. The chart displays those computed amounts and can group by day, week, or month. |
+| Publication | Archiving a product hides it from the public menu. Earlier orders retain their own product and price snapshots. |
+| Business configuration | Delivery fees and branding are stored with the shop. Changing the fee changes the next server quote, and the website reads the updated brand. |
+| Image upload | The API decodes allowed formats, applies dimension and payload limits, re-encodes the image as WebP, then uploads with server-side Cloudinary credentials. |

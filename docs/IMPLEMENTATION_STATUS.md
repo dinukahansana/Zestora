@@ -45,6 +45,17 @@ The starter page and health endpoint are the two implemented features. MongoDB A
 | Accounts | Registration, sign-in and sign-out, profile name, saved addresses, and single-use reset links. External mail delivery uses the configured SMTP service. |
 | Verification | Type checks, both builds, thirteen API cases, six storefront cases, and two browser orders against a local MongoDB replica set. Reset email contents and token consumption were verified with a test mailer. |
 
+## Phase 4
+
+| Area | Status |
+| --- | --- |
+| Admin portal | Role-protected workspace for products, categories, customer history, inventory, coupons, business settings, and reports. |
+| Orders | Search and filters, order details, permitted fulfilment transitions, cash payment confirmation, and order printing. |
+| Reports | MongoDB-derived counts, paid revenue in day/week/month groupings, popular items, recent orders, and low-stock warnings. |
+| Business management | Shared shop record for branding, contact details, language preference, availability, zones, fees, and notification and AI preferences. |
+| Security | Admin-only writes and image uploads. Mutations save audit records, and images are validated and re-encoded before provider calls. |
+| Verification | Seventeen API tests, four database-backed browser cases, six storefront browser cases, type checks, and both builds. Cloudinary upload behavior was tested against a captured provider interface. |
+
 ## Next milestone
 
-Phase 4 adds the administrator dashboard, catalogue, orders, customers, coupons, business settings, reports, and stock management.
+Phase 5 adds PayHere sandbox checkout, verified server callbacks, payment persistence, and customer notifications.

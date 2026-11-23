@@ -3,7 +3,6 @@ import { Router, type CookieOptions, type Request, type Response } from 'express
 import { rateLimit } from 'express-rate-limit';
 import type { Types } from 'mongoose';
 import { z } from 'zod';
-import { Category, Product } from '../catalogue/models.ts';
 import type { AppConfig } from '../config.ts';
 import { HttpError, isDuplicateKey, parseInput } from '../http.ts';
 import { Session, User, type Role } from './models.ts';
@@ -110,20 +109,6 @@ export function authRouter(config: AppConfig) {
   router.get('/me', async (request, response) => {
     const user = await sessions.requireUser(request);
     response.json({ user: publicUser(user) });
-  });
-  return router;
-}
-
-export function adminCatalogueRouter(config: AppConfig) {
-  const router = Router();
-  const sessions = sessionAccess(config);
-  router.get('/catalogue', async (request, response) => {
-    await sessions.requireUser(request, 'admin');
-    const [categories, products] = await Promise.all([
-      Category.find().select('-__v').sort({ position: 1, slug: 1 }).lean(),
-      Product.find().select('-__v').sort({ slug: 1 }).lean(),
-    ]);
-    response.set('Cache-Control', 'no-store').json({ categories, products });
   });
   return router;
 }

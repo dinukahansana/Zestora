@@ -11,7 +11,7 @@ export function languageOf(value?: string): Language {
 
 const storageKey = 'zestora.language';
 
-function initialLanguage(): Language {
+function savedLanguage(): Language | undefined {
   try {
     const saved = localStorage.getItem(storageKey);
     if (saved === 'en' || saved === 'si') return saved;
@@ -19,7 +19,18 @@ function initialLanguage(): Language {
     // Browser settings may prevent local storage access.
   }
 
-  return languageOf(navigator.language);
+  return undefined;
+}
+
+let preferredLanguage = savedLanguage();
+
+export function chooseLanguage(language: Language) {
+  preferredLanguage = language;
+  return i18n.changeLanguage(language);
+}
+
+export function applyShopDefaultLanguage(language: Language) {
+  if (!preferredLanguage) void chooseLanguage(language);
 }
 
 function applyLanguage(value: string) {
@@ -36,7 +47,7 @@ i18n.on('languageChanged', applyLanguage);
 
 void i18n.use(initReactI18next).init({
   resources: { en: { translation: en }, si: { translation: si } },
-  lng: initialLanguage(),
+  lng: preferredLanguage ?? languageOf(navigator.language),
   supportedLngs: ['en', 'si'],
   fallbackLng: 'en',
   initAsync: false,

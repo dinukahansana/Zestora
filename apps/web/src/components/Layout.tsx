@@ -4,9 +4,9 @@ import { useTranslation } from 'react-i18next';
 import { Link, NavLink, Outlet, useLocation } from 'react-router';
 import { orderingEnabled } from '../commerce/api';
 import { useCart } from '../commerce/cart';
-import { contact } from '../content/contact';
+import { useShopContact, useShopPresentation } from '../content/shopSettings';
 import { useCatalogue } from '../content/useCatalogue';
-import { languageOf } from '../i18n';
+import { chooseLanguage, languageOf, applyShopDefaultLanguage } from '../i18n';
 
 const links = [
   { path: '/', name: 'nav.home' },
@@ -26,12 +26,14 @@ const policies = [
 
 function Brand() {
   const { t } = useTranslation();
+  const settings = useShopPresentation();
+  const name = settings.data?.name || t('common.brand');
   return (
-    <Link to="/" className="inline-flex w-fit items-center gap-2.5" aria-label={t('common.brand')}>
-      <span className="grid size-9 place-items-center rounded-full bg-lime text-ink min-[360px]:size-10">
-        <Citrus size={23} aria-hidden="true" />
+    <Link to="/" className="inline-flex min-w-0 w-fit items-center gap-2.5" aria-label={name}>
+      <span className="grid size-9 shrink-0 place-items-center overflow-hidden rounded-full bg-lime text-ink min-[360px]:size-10">
+        {settings.data?.logo ? <img src={settings.data.logo} alt="" className="size-full object-cover" /> : <Citrus size={23} aria-hidden="true" />}
       </span>
-      <span className="font-display text-2xl leading-none tracking-tight min-[360px]:text-3xl">Zestora<span className="text-[#648744]">.</span></span>
+      <span className="max-w-32 truncate font-display text-2xl leading-none tracking-tight min-[360px]:text-3xl sm:max-w-60">{name}<span className="text-[#648744]">.</span></span>
     </Link>
   );
 }
@@ -75,7 +77,7 @@ function Header() {
               aria-label={t('nav.language')}
               className="ml-1 min-w-0 cursor-pointer bg-transparent p-0.5 text-xs font-extrabold"
               value={language}
-              onChange={event => void i18n.changeLanguage(event.target.value)}
+              onChange={event => void chooseLanguage(languageOf(event.target.value))}
             >
               <option value="en" lang="en">English</option>
               <option value="si" lang="si">සිංහල</option>
@@ -113,7 +115,9 @@ function Header() {
 function Footer() {
   const { t, i18n } = useTranslation();
   const demo = useCatalogue().data?.demo;
-  const hours = contact.hours[languageOf(i18n.resolvedLanguage)] ?? contact.hours.en;
+  const contact = useShopContact();
+  const language = languageOf(i18n.resolvedLanguage);
+  const hours = contact.hours[language] ?? contact.hours.en;
   return (
     <footer className="bg-forest pt-13 text-cream">
       <div className="container-wide grid gap-9 sm:grid-cols-2 lg:grid-cols-[1.3fr_1fr_1fr_1fr]">
@@ -132,7 +136,7 @@ function Footer() {
         <section>
           <h2 className="mb-3 text-sm font-extrabold text-lime">{t('footer.contact')}</h2>
           <div className="space-y-2 text-sm">
-            {contact.address && <p>{contact.address}</p>}
+            {contact.address[language] && <p>{contact.address[language]}</p>}
             {hours && <p>{hours}</p>}
             {contact.email ? <a className="block break-words hover:underline" href={`mailto:${contact.email}`}>{contact.email}</a> : <Link className="hover:underline" to="/contact">{t('home.contactAction')}</Link>}
           </div>
@@ -150,7 +154,12 @@ export function Layout() {
   const { t } = useTranslation();
   const { pathname } = useLocation();
   const previousPath = useRef(pathname);
+  const shopLanguage = useShopPresentation().data?.defaultLanguage;
   const main = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (shopLanguage) applyShopDefaultLanguage(shopLanguage);
+  }, [shopLanguage]);
 
   useEffect(() => {
     if (previousPath.current === pathname) return;

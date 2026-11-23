@@ -2,7 +2,7 @@
 
 **Freshness in Every Sip.**
 
-Zestora is a configurable ordering and business management platform for juice bars and other beverage shops. It has an English/Sinhala storefront with a demo catalogue. With a database connected, customers can place pickup or delivery orders, track orders, and manage accounts. The roadmap also covers administration, PayHere, and AI-assisted workflows.
+Zestora is a configurable ordering and business management platform for juice bars and other beverage shops. It has an English/Sinhala storefront with a demo catalogue. With a database connected, customers can place pickup or delivery orders, track orders, and manage accounts. Administrators manage orders, catalogue, stock, promotions, settings, and reports in `/admin`. PayHere and AI-assisted workflows are later milestones.
 
 ## Run locally
 
@@ -31,9 +31,9 @@ The default configuration starts the website in demo mode and the API health end
 
 Copy the root `.env.example` to `.env` and set `MONGODB_URI` to your Atlas or local MongoDB replica set. To populate a development database, run `npm run seed:demo`. Set `VITE_CATALOGUE_MODE=api` in `apps/web/.env.local`, then restart the app. `GET /api/ready` reports the connection state, and `/menu` displays published database records in API mode.
 
-To create the initial administrator, set `ADMIN_NAME`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD` in the ignored environment and run `npm run create:admin`. The command creates a new account and preserves an existing account with the same email. Remove the bootstrap password from local configuration after use.
+To create the initial administrator, set `ADMIN_NAME`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD` in the ignored environment and run `npm run create:admin`. The command creates a new account and preserves an existing account with the same email. Sign in, then open `/admin`. Remove the bootstrap password from local configuration after use.
 
-The demo seed adds a Colombo delivery zone and the `FRESH10` sample coupon. Set `SITE_ORIGIN`, `SMTP_URL`, and `MAIL_FROM` to enable password reset emails. Supply SMTP credentials only in the ignored environment.
+The demo seed adds a Colombo delivery zone and the `FRESH10` sample coupon. Set `SITE_ORIGIN`, `SMTP_URL`, and `MAIL_FROM` to enable password reset emails. Supply SMTP credentials only in the ignored environment. Set `CLOUDINARY_URL` server-side to enable verified image uploads. Database branding settings take precedence when present.
 
 Use `npm run test:api` for the API suite and `npm run test:shop` for the browser checkout suite. The first run downloads a temporary MongoDB binary. See [API documentation](docs/API_DOCUMENTATION.md) and [database schema](docs/DATABASE_SCHEMA.md).
 

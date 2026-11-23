@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import { z } from 'zod';
 import { PageHeading } from '../components/Storefront';
-import { contact } from '../content/contact';
+import { useShopContact } from '../content/shopSettings';
 import { languageOf } from '../i18n';
 
 const contactSchema = z.object({
@@ -52,9 +52,11 @@ function ContactForm({ recipient }: { recipient: string }) {
 
 export default function ContactPage() {
   const { t, i18n } = useTranslation();
+  const contact = useShopContact();
+  const address = contact.address[languageOf(i18n.resolvedLanguage)];
   const hours = contact.hours[languageOf(i18n.resolvedLanguage)] ?? contact.hours.en;
   const links = contact.links.filter(link => link.url);
-  const hasDetails = contact.address || contact.phone || contact.email || hours || links.length;
+  const hasDetails = address || contact.phone || contact.email || hours || links.length;
   return (
     <>
       <PageHeading title={t('contact.title')}><p>{t('contact.intro')}</p></PageHeading>
@@ -64,7 +66,7 @@ export default function ContactPage() {
           {!hasDetails && <p className="mt-3 text-muted">{t('contact.pending')}</p>}
           {hasDetails && (
             <dl className="mt-4 space-y-3">
-              {contact.address && <div><dt className="font-extrabold">{t('contact.address')}</dt><dd>{contact.address}</dd></div>}
+              {address && <div><dt className="font-extrabold">{t('contact.address')}</dt><dd>{address}</dd></div>}
               {contact.phone && <div><dt className="font-extrabold">{t('contact.phone')}</dt><dd><a className="underline" href={`tel:${contact.phone.replace(/[^+\d]/g, '')}`}>{contact.phone}</a></dd></div>}
               {contact.email && <div><dt className="font-extrabold">{t('contact.email')}</dt><dd><a className="break-words underline" href={`mailto:${contact.email}`}>{contact.email}</a></dd></div>}
               {hours && <div><dt className="font-extrabold">{t('contact.hours')}</dt><dd>{hours}</dd></div>}

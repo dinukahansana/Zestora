@@ -13,12 +13,30 @@ export interface DeliveryZone {
   fee: number;
 }
 
+export interface ShopPresentation {
+  name: string;
+  logo: string;
+  phone: string;
+  email: string;
+  address: LocalText;
+  hours: LocalText;
+  map: string;
+  whatsapp: string;
+  instagram: string;
+  facebook: string;
+  defaultLanguage: 'en' | 'si';
+  currency: 'LKR';
+}
+
 export interface ShopRecord {
   key: string;
   pickupEnabled: boolean;
   deliveryEnabled: boolean;
   deliveryZones: DeliveryZone[];
   minimumOrder: number;
+  presentation?: ShopPresentation;
+  notificationsEnabled?: boolean;
+  aiEnabled?: boolean;
 }
 
 const localText = new Schema({ en: { type: String, required: true }, si: { type: String, required: true } }, { _id: false });
@@ -34,6 +52,13 @@ const shopSchema = new Schema<ShopRecord>({
   deliveryEnabled: { type: Boolean, required: true },
   deliveryZones: { type: [zoneSchema], default: [] },
   minimumOrder: { type: Number, min: 0, required: true },
+  presentation: new Schema<ShopPresentation>({
+    name: String, logo: String, phone: String, email: String,
+    address: localText, hours: localText, map: String, whatsapp: String, instagram: String, facebook: String,
+    defaultLanguage: { type: String, enum: ['en', 'si'] }, currency: { type: String, enum: ['LKR'] },
+  }, { _id: false }),
+  notificationsEnabled: { type: Boolean, default: true },
+  aiEnabled: { type: Boolean, default: true },
 }, { timestamps: true });
 
 interface CouponRecord {
@@ -102,6 +127,7 @@ export interface OrderRecord {
   orderStatus: OrderState;
   paymentStatus: PaymentState;
   paymentMethod: PaymentMethod;
+  paidAt?: Date;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -124,9 +150,11 @@ const orderSchema = new Schema<OrderRecord>({
   orderStatus: { type: String, enum: orderStates, default: 'pending' },
   paymentStatus: { type: String, enum: paymentStates, default: 'pending' },
   paymentMethod: { type: String, enum: ['cash_pickup', 'cash_delivery', 'payhere'], required: true },
+  paidAt: Date,
 }, { timestamps: true });
 
 orderSchema.index({ orderStatus: 1, createdAt: -1 });
+orderSchema.index({ paymentStatus: 1, paidAt: -1 });
 
 export const Shop = model('Shop', shopSchema);
 export const Coupon = model('Coupon', couponSchema);

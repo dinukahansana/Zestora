@@ -26,3 +26,9 @@ Customer addresses, orders, payments, discounts, delivery and business settings,
 | `coupons` | Unique normalized code, percentage or fixed value, minimum order, enabled flag, expiry and usage limit, and number redeemed. |
 
 Saved addresses and the current hashed password-reset key live on the user document. The order and coupon counter commit in the same transaction. Use Atlas or another MongoDB replica set for ordering and password reset transactions.
+
+## Administration collections and reporting
+
+`stocks` stores a unique item slug, bilingual name, unit, current quantity, and low-stock threshold. `auditlogs` records the actor's user ID, action, entity, reference, and commit timestamp. Administrative database mutations and their audit entry commit together. The shop record also stores public branding and contact fields and switches for notification and AI workflows.
+
+Order fulfilment and payment state stay distinct. A cash payment records `paidAt`. Reports group active paid transactions in the Asia/Colombo time zone. Listing an item in an order snapshots its previous price, so catalogue editing preserves historical totals.

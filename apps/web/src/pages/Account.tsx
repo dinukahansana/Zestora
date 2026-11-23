@@ -26,6 +26,7 @@ function SignInForm() {
       const { user } = await send<{ user: Account }>(register ? '/auth/register' : '/auth/login', data);
       cache.setQueryData(['account'], user);
       if (search.get('next') === 'checkout') void go('/checkout');
+      if (search.get('next') === 'admin' && user.role === 'admin') void go('/admin');
     } catch (error) {
       setError(error);
     } finally {
@@ -107,6 +108,7 @@ function Profile({ account }: { account: Account }) {
             <label className="grid gap-1 text-sm font-bold">{t('contact.name')}<input className="field" name="name" defaultValue={account.name} minLength={2} maxLength={100} required /></label>
             <button type="submit" className="button button-primary w-fit" disabled={pending}>{t('account.save')}</button>
           </form>
+          {account.role === 'admin' && <Link className="button button-primary w-fit" to="/admin">{t('admin.title')}</Link>}
           <button type="button" className="button button-outline w-fit" disabled={pending} onClick={() => void perform(logout)}>{t('account.signOut')}</button>
         </section>
         <section className="grid gap-4 rounded-2xl border border-line bg-paper p-5 sm:p-7">

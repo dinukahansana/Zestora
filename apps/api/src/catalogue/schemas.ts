@@ -9,7 +9,7 @@ function localText(maxLength: number) {
 
 const choice = z.strictObject({ id: slugSchema, name: localText(100), price: z.number().int().min(0).max(1000000) });
 const uniqueChoices = (choices: { id: string }[]) => new Set(choices.map(choice => choice.id)).size === choices.length;
-const imageSchema = z.string().max(600).refine(value => /^(?:\/images\/[a-z0-9.-]+|https:\/\/res\.cloudinary\.com\/[a-zA-Z0-9/_.,-]+)$/.test(value), 'Use an approved product image URL.');
+export const imageSchema = z.string().max(600).refine(value => /^(?:\/images\/[a-z0-9.-]+|https:\/\/res\.cloudinary\.com\/[a-zA-Z0-9/_.,-]+)$/.test(value), 'Use an approved product image URL.');
 
 export const categoryInput = z.strictObject({
   slug: slugSchema,

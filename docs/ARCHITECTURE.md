@@ -16,7 +16,7 @@ In local development, the browser requests `/api/health` at the same address as 
 ## Planned system
 
 - **React** handles navigation, display, cart interactions, forms, and translations. The API supplies data and validates requests.
-- **Express and MongoDB currently** serve catalogue, accounts, orders, and checkout pricing. A MongoDB transaction links an order and its coupon usage. Later milestones add payments, inventory, and reporting queries. Mongoose defines persistence models.
+- **Express and MongoDB currently** serve catalogue, accounts, orders, and checkout pricing. A MongoDB transaction links an order and its coupon usage. The admin workspace adds inventory, order operations, and reporting queries. The PayHere workflow comes next. Mongoose defines persistence models.
 - **Cloudinary** stores images. MongoDB stores image references and business records.
 - **PayHere** receives payment requests and sends status notifications to a verified backend endpoint. The browser return page reads backend payment state.
 - **n8n** orchestrates notifications, schedules, and calls to approved services. Use an outbox to record a business change and its pending automation event together where appropriate.

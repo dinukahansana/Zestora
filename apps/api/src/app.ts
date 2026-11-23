@@ -1,7 +1,10 @@
 import cors from 'cors';
 import express, { type RequestHandler } from 'express';
 import helmet from 'helmet';
-import { adminCatalogueRouter, authRouter } from './auth/routes.ts';
+import { createImageUploader, type UploadImage } from './admin/images.ts';
+import { adminRouter } from './admin/routes.ts';
+import { storefrontSettingsRouter } from './admin/settings.ts';
+import { authRouter } from './auth/routes.ts';
 import { passwordResetRouter } from './auth/passwordReset.ts';
 import { profileRouter } from './auth/profile.ts';
 import { catalogueRouter } from './catalogue/routes.ts';
@@ -11,7 +14,11 @@ import { errorHandler, HttpError, notFound } from './http.ts';
 import { createMailer, type SendEmail } from './mail.ts';
 import { orderingRouter } from './ordering/routes.ts';
 
-export function createApp(config: AppConfig, sendEmail: SendEmail | undefined = createMailer(config)) {
+export function createApp(
+  config: AppConfig,
+  sendEmail: SendEmail | undefined = createMailer(config),
+  uploadImage: UploadImage | undefined = createImageUploader(config),
+) {
   const app = express();
   if (config.trustProxyHops) app.set('trust proxy', config.trustProxyHops);
   app.disable('x-powered-by');
@@ -48,7 +55,9 @@ export function createApp(config: AppConfig, sendEmail: SendEmail | undefined = 
   api.use('/account', requireDatabase, profileRouter(config));
   api.use(['/shop/checkout', '/orders'], requireDatabase);
   api.use(orderingRouter(config));
-  api.use('/admin', requireDatabase, adminCatalogueRouter(config));
+  api.use('/admin', requireDatabase, adminRouter(config, uploadImage));
+  api.use('/shop/storefront', requireDatabase);
+  api.use(storefrontSettingsRouter);
   api.use(['/catalogue', '/products', '/categories'], requireDatabase);
   api.use(catalogueRouter);
   app.use('/api', api);

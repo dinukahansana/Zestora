@@ -8,6 +8,7 @@ const environmentSchema = z.object({
   MONGODB_URI: z.string().trim().refine(uri => /^mongodb(?:\+srv)?:\/\//.test(uri)).optional(),
   ALLOWED_ORIGINS: z.string().default('http://127.0.0.1:5173,http://localhost:5173,http://127.0.0.1:4173'),
   SITE_ORIGIN: z.url({ protocol: /^https?$/ }).default('http://127.0.0.1:5173'),
+  CLOUDINARY_URL: z.url({ protocol: /^cloudinary$/ }).optional(),
   SMTP_URL: z.url({ protocol: /^smtps?$/ }).optional(),
   MAIL_FROM: z.email().optional(),
   TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(4).default(0),
@@ -18,6 +19,7 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     ...env,
     PORT: env.PORT || undefined,
     MONGODB_URI: env.MONGODB_URI || undefined,
+    CLOUDINARY_URL: env.CLOUDINARY_URL || undefined,
     SMTP_URL: env.SMTP_URL || undefined,
     MAIL_FROM: env.MAIL_FROM || undefined,
   });
@@ -42,6 +44,7 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     allowedOrigins,
     siteOrigin: new URL(values.data.SITE_ORIGIN).origin,
     smtpUrl: values.data.SMTP_URL,
+    cloudinaryUrl: values.data.CLOUDINARY_URL,
     mailFrom: values.data.MAIL_FROM,
   };
 }

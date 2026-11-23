@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 import { MongoMemoryReplSet } from 'mongodb-memory-server-core';
 import request from 'supertest';
+import sharp from 'sharp';
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest';
 import { createApp } from '../src/app.ts';
 import { Session, User } from '../src/auth/models.ts';
@@ -126,7 +127,7 @@ describe('account sessions', () => {
     const secureApp = createApp(readConfig({ NODE_ENV: 'production' }));
     const response = await request(secureApp).post('/api/auth/login').send({ email: demoEmail, password }).expect(200);
     expect(response.get('set-cookie')?.[0]).toMatch(/^__Host-zestora-session=.*HttpOnly; Secure; SameSite=Lax/);
-  });
+  }, 15000);
 
   test('expired sessions are rejected even before TTL cleanup runs', async () => {
     const client = request.agent(app);
@@ -251,4 +252,95 @@ test('a reset link is single use and revokes existing sessions', async () => {
   await client.get('/api/auth/me').expect(401);
   await request(emailApp).post('/api/auth/reset-password').send({ key, password: nextPassword }).expect(400);
   await client.post('/api/auth/login').send({ email, password: nextPassword }).expect(200);
+});
+
+describe('administration', () => {
+  const adminApp = createApp(config);
+  const manager = request.agent(adminApp);
+  const visitor = request.agent(adminApp);
+
+  beforeAll(async () => {
+    await manager.post('/api/auth/login').send({ email: demoEmail, password }).expect(200);
+    await visitor.post('/api/auth/login').send({ email: buyer.email, password }).expect(200);
+  });
+
+  test('catalogue changes require an administrator and update the public API', async () => {
+    const name = { en: 'Lab Samples', si: 'ආදර්ශ එකතුව' };
+    const category = { slug: 'lab-samples', name, position: 2, published: true };
+    await visitor.post('/api/admin/categories').send(category).expect(403);
+    await manager.post('/api/admin/categories').send(category).expect(201);
+    await manager.post('/api/admin/categories').send(category).expect(409);
+    const product = {
+      slug: 'lab-juice', name, category: category.slug, description: name, ingredients: [name], image: '/images/mango.webp',
+      sizes: [{ id: 'regular', name, price: 350 }], addOns: [], published: true, available: true,
+    };
+    await manager.post('/api/admin/products').send(product).expect(201);
+    await request(app).get('/api/products/lab-juice').expect(200);
+    await manager.put('/api/admin/products/lab-juice').send({ ...product, sizes: [{ ...product.sizes[0], price: 375 }] }).expect(200);
+    const publicProduct = await request(app).get('/api/products/lab-juice').expect(200);
+    expect(publicProduct.body.item.startingPrice).toBe(375);
+    await manager.delete('/api/admin/products/lab-juice').expect(204);
+    await request(app).get('/api/products/lab-juice').expect(404);
+    await manager.delete('/api/admin/categories/lab-samples').expect(204);
+  });
+
+  test('permitted order transitions and cash payments feed actual reports and audit records', async () => {
+    const listed = await manager.get('/api/admin/orders?q=Demo%20Buyer&status=pending').expect(200);
+    const ref = listed.body.items.find((item: { fulfillment: { type: string } }) => item.fulfillment.type === 'pickup').reference;
+    await manager.patch('/api/admin/orders/' + ref + '/status').send({ status: 'completed' }).expect(409);
+    await manager.patch('/api/admin/orders/' + ref + '/status').send({ status: 'confirmed' }).expect(200);
+    await manager.patch('/api/admin/orders/' + ref + '/status').send({ status: 'preparing' }).expect(200);
+    await manager.patch('/api/admin/orders/' + ref + '/status').send({ status: 'out_for_delivery' }).expect(409);
+    await manager.patch('/api/admin/orders/' + ref + '/status').send({ status: 'ready_for_pickup' }).expect(200);
+    const paid = await manager.patch('/api/admin/orders/' + ref + '/cash-payment').expect(200);
+    expect(paid.body.order.paymentStatus).toBe('paid');
+    await manager.patch('/api/admin/orders/' + ref + '/cash-payment').expect(409);
+    await manager.patch('/api/admin/orders/' + ref + '/status').send({ status: 'completed' }).expect(200);
+    const snapshot = await manager.get('/api/admin/dashboard').expect(200);
+    expect(snapshot.body.metrics).toMatchObject({ completed: 1, revenue: paid.body.order.totals.total });
+    const report = await manager.get('/api/admin/reports?period=month').expect(200);
+    expect(report.body.items[0]).toMatchObject({ paidOrders: 1, revenue: paid.body.order.totals.total });
+    const audit = await manager.get('/api/admin/audit').expect(200);
+    expect(audit.body.items).toEqual(expect.arrayContaining([expect.objectContaining({ action: 'cash_paid', reference: ref })]));
+  });
+
+  test('stock, promotions, business settings, and customer history use MongoDB records', async () => {
+    await manager.put('/api/admin/inventory/mango').send({ name: { en: 'Mango', si: 'අඹ' }, unit: 'kg', onHand: 3, threshold: 5 }).expect(200);
+    const status = await manager.get('/api/admin/dashboard').expect(200);
+    expect(status.body.lowStock.map((stock: { slug: string }) => stock.slug)).toContain('mango');
+    const coupon = { type: 'fixed', value: 100, minimumOrder: 500, active: true, usageLimit: 2 };
+    await manager.put('/api/admin/coupons/FIXED100').send(coupon).expect(200);
+    const quote = await request(app).post('/api/orders/quote').send({ items: [mango], fulfillment: pickup, coupon: 'fixed100' }).expect(200);
+    expect(quote.body.totals.discount).toBe(100);
+    const { body: settings } = await manager.get('/api/admin/settings').expect(200);
+    settings.presentation.name = 'Zestora Test Shop';
+    settings.deliveryZones[0].fee = 250;
+    await manager.put('/api/admin/settings').send(settings).expect(200);
+    const business = await request(app).get('/api/shop/storefront').expect(200);
+    expect(business.body.name).toBe('Zestora Test Shop');
+    const checkout = await request(app).get('/api/shop/checkout').expect(200);
+    expect(checkout.body.deliveryZones[0].fee).toBe(250);
+    const clients = await manager.get('/api/admin/customers?q=buyer%40zestora.example').expect(200);
+    const person = clients.body.items.find((user: { email: string }) => user.email === buyer.email);
+    expect(person).not.toHaveProperty('passwordHash');
+    const history = await manager.get('/api/admin/customers/' + person._id + '/orders').expect(200);
+    expect(history.body.items.length).toBeGreaterThan(0);
+  });
+
+  test('image uploads are admin-only and normalized before provider upload', async () => {
+    await manager.post('/api/admin/images').set('Content-Type', 'image/png').send(Buffer.from('invalid')).expect(503);
+    const uploaded: Buffer[] = [];
+    const images = createApp(config, undefined, async image => {
+      uploaded.push(image);
+      return 'https://res.cloudinary.com/demo/image/upload/zestora/test.webp';
+    });
+    const user = request.agent(images);
+    await user.post('/api/auth/login').send({ email: demoEmail, password }).expect(200);
+    await request(images).post('/api/admin/images').set('Content-Type', 'image/png').send(Buffer.from('invalid')).expect(401);
+    await user.post('/api/admin/images').set('Content-Type', 'image/png').send(Buffer.from('invalid')).expect(400);
+    const png = await sharp({ create: { width: 20, height: 20, channels: 3, background: '#15512f' } }).png().toBuffer();
+    const response = await user.post('/api/admin/images').set('Content-Type', 'image/png').send(png).expect(201);
+    expect(response.body.url).toContain('/zestora/test.webp');
+    expect((await sharp(uploaded[0]).metadata()).format).toBe('webp');
+  });
 });

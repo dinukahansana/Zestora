@@ -18,6 +18,10 @@ Run `npm run test:api`. Vitest orchestrates the suite, Supertest exercises Expre
 
 Run `npm run test:shop` with Chromium. The suite starts Vite, Express, and a temporary MongoDB replica set. It exercises real guest delivery, account pickup, saved addresses, tracking, and reordering. API tests also check idempotency, coupon usage races, authorization, and the lifetime of a password reset link.
 
+## Administration tests
+
+`npm run test:api` covers admin roles, public publication, cash and status transitions, audit records, low stock, database revenue, configurable fees and branding, and image normalization. The browser shop suite covers admin sign-in, catalogue manipulation, settings, order confirmation, and print access. The image provider contract is tested with a captured upload. A Cloudinary account is required to verify an external upload.
+
 ## Planned test coverage
 
 | Tool | Planned use |

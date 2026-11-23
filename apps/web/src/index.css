@@ -74,3 +74,10 @@
     min-height: 34rem;
   }
 }
+
+@media print {
+  body:has(#admin-print) * { visibility: hidden; }
+  body:has(#admin-print) #admin-print,
+  body:has(#admin-print) #admin-print * { visibility: visible; }
+  #admin-print { position: absolute; inset: 0; padding: 16px; }
+}
