@@ -1,0 +1,29 @@
+# Local environment files. Track placeholder-only examples.
+.env
+.env.*
+*.env
+.envrc
+!.env.example
+
+# Private keys and local credentials
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa
+id_ed25519
+credentials.json
+secrets.json
+.n8n/
+
+# Dependencies, build outputs, and test artifacts
+node_modules/
+dist/
+build/
+coverage/
+*.tsbuildinfo
+
+# Logs and operating system files
+*.log
+.DS_Store
+Thumbs.db
