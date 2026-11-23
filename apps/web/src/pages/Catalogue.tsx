@@ -3,7 +3,8 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams, useSearchParams } from 'react-router';
 import { DemoLabel, PageHeading, ProductCard } from '../components/Storefront';
-import { categories, categoriesBySlug, formatPrice, products, startingPrice, type Product } from '../content/catalogue';
+import { formatPrice, startingPrice, type Product } from '../content/catalogue';
+import { CatalogueMessage, useCatalogue } from '../content/useCatalogue';
 import { languageOf } from '../i18n';
 
 const sorts = ['recommended', 'low', 'high', 'az'] as const;
@@ -13,6 +14,10 @@ export function CataloguePage() {
   const { t, i18n } = useTranslation();
   const language = languageOf(i18n.resolvedLanguage);
   const [params, setParams] = useSearchParams();
+  const catalogue = useCatalogue();
+  const categories = catalogue.data?.categories ?? [];
+  const products = catalogue.data?.products ?? [];
+  const availableCategory = (slug: string) => categories.some(item => item.slug === slug);
   const query = params.get('q') ?? '';
   const category = params.get('category') ?? '';
   const sort = params.get('sort') ?? 'recommended';
@@ -26,7 +31,7 @@ export function CataloguePage() {
   }
 
   const visible = products.filter(product => {
-    if (categoriesBySlug.has(category) && product.category !== category) return false;
+    if (availableCategory(category) && product.category !== category) return false;
     const fields = [product.name, product.description, ...product.ingredients];
     return !search || fields.some(field => Object.values(field).some(value => normalize(value).includes(search)));
   }).sort((left, right) => {
@@ -40,40 +45,43 @@ export function CataloguePage() {
     <>
       <PageHeading title={t('menu.title')}><p>{t('menu.description')}</p></PageHeading>
       <div className="container-wide py-8 sm:py-12">
-        <DemoLabel withDescription />
-        <div className="mt-6 grid gap-3 rounded-2xl border border-line bg-paper p-4 sm:grid-cols-[1.5fr_1fr_1fr]">
-          <label className="grid gap-1.5 text-sm font-extrabold">
-            {t('menu.search')}
-            <span className="relative">
-              <Search size={17} aria-hidden="true" className="absolute top-3 left-3.5 text-muted" />
-              <input className="field pl-10" type="search" value={query} maxLength={100} placeholder={t('menu.placeholder')} onChange={event => updateFilter('q', event.target.value, true)} />
-            </span>
-          </label>
-          <label className="grid gap-1.5 text-sm font-extrabold">
-            {t('menu.category')}
-            <select className="field" value={categoriesBySlug.has(category) ? category : ''} onChange={event => updateFilter('category', event.target.value)}>
-              <option value="">{t('menu.all')}</option>
-              {categories.map(item => <option key={item.slug} value={item.slug}>{item.name[language]}</option>)}
-            </select>
-          </label>
-          <label className="grid gap-1.5 text-sm font-extrabold">
-            {t('menu.sort')}
-            <select className="field" value={sorts.find(value => value === sort) ?? 'recommended'} onChange={event => updateFilter('sort', event.target.value === 'recommended' ? '' : event.target.value)}>
-              {sorts.map(option => <option key={option} value={option}>{t(`menu.${option}`)}</option>)}
-            </select>
-          </label>
-        </div>
-        <p className="mt-5 text-sm font-bold text-muted" aria-live="polite">{t('menu.count', { count: visible.length })}</p>
-        {visible.length ? (
-          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {visible.map(product => <ProductCard key={product.slug} product={product} />)}
+        {!catalogue.data && <CatalogueMessage query={catalogue} />}
+        {catalogue.data && <>
+          {catalogue.data.demo && <DemoLabel withDescription />}
+          <div className="mt-6 grid gap-3 rounded-2xl border border-line bg-paper p-4 sm:grid-cols-[1.5fr_1fr_1fr]">
+            <label className="grid gap-1.5 text-sm font-extrabold">
+              {t('menu.search')}
+              <span className="relative">
+                <Search size={17} aria-hidden="true" className="absolute top-3 left-3.5 text-muted" />
+                <input className="field pl-10" type="search" value={query} maxLength={100} placeholder={t('menu.placeholder')} onChange={event => updateFilter('q', event.target.value, true)} />
+              </span>
+            </label>
+            <label className="grid gap-1.5 text-sm font-extrabold">
+              {t('menu.category')}
+              <select className="field" value={availableCategory(category) ? category : ''} onChange={event => updateFilter('category', event.target.value)}>
+                <option value="">{t('menu.all')}</option>
+                {categories.map(item => <option key={item.slug} value={item.slug}>{item.name[language]}</option>)}
+              </select>
+            </label>
+            <label className="grid gap-1.5 text-sm font-extrabold">
+              {t('menu.sort')}
+              <select className="field" value={sorts.find(value => value === sort) ?? 'recommended'} onChange={event => updateFilter('sort', event.target.value === 'recommended' ? '' : event.target.value)}>
+                {sorts.map(option => <option key={option} value={option}>{t(`menu.${option}`)}</option>)}
+              </select>
+            </label>
           </div>
-        ) : (
-          <div className="mt-4 rounded-2xl border border-line bg-paper px-5 py-12 text-center">
-            <p className="font-bold">{t('menu.none')}</p>
-            <button className="button button-outline mt-4" type="button" onClick={() => setParams({})}>{t('menu.reset')}</button>
-          </div>
-        )}
+          <p className="mt-5 text-sm font-bold text-muted" aria-live="polite">{t('menu.count', { count: visible.length })}</p>
+          {visible.length ? (
+            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {visible.map(product => <ProductCard key={product.slug} product={product} />)}
+            </div>
+          ) : (
+            <div className="mt-4 rounded-2xl border border-line bg-paper px-5 py-12 text-center">
+              <p className="font-bold">{t('menu.none')}</p>
+              <button className="button button-outline mt-4" type="button" onClick={() => setParams({})}>{t('menu.reset')}</button>
+            </div>
+          )}
+        </>}
       </div>
     </>
   );
@@ -134,8 +142,14 @@ export function ProductPage() {
   const { slug } = useParams();
   const { t, i18n } = useTranslation();
   const language = languageOf(i18n.resolvedLanguage);
+  const catalogue = useCatalogue();
+  const products = catalogue.data?.products ?? [];
   const product = products.find(item => item.slug === slug);
   const back = <Link to="/menu" className="inline-flex items-center gap-2 text-sm font-extrabold hover:underline"><ArrowLeft size={17} aria-hidden="true" /> {t('common.backMenu')}</Link>;
+
+  if (!catalogue.data) {
+    return <div className="container-wide py-8">{back}<div className="mt-5"><CatalogueMessage query={catalogue} /></div></div>;
+  }
 
   if (!product) {
     return <><PageHeading title={t('product.missing')}><p>{t('product.missingText')}</p></PageHeading><div className="container-wide py-8">{back}</div></>;
@@ -148,8 +162,8 @@ export function ProductPage() {
       <div className="mt-5 grid items-start gap-7 lg:grid-cols-[1fr_1fr] lg:gap-12">
         <img src={product.image} alt={product.name[language]} width={760} height={760} className="aspect-square max-h-[40rem] w-full rounded-2xl object-cover" />
         <div>
-          <DemoLabel />
-          <p className="mt-3 text-sm font-extrabold text-muted">{categoriesBySlug.get(product.category)?.name[language]}</p>
+          {catalogue.data.demo && product.demo !== false && <DemoLabel />}
+          <p className="mt-3 text-sm font-extrabold text-muted">{catalogue.data.categories.find(item => item.slug === product.category)?.name[language]}</p>
           <h1 className="display-title mt-1">{product.name[language]}</h1>
           <p className="mt-3 leading-relaxed text-muted">{product.description[language]}</p>
           <p className={`mt-4 w-fit rounded-full px-3 py-1 text-sm font-extrabold ${product.available ? 'bg-moss text-ink' : 'bg-blush text-[#853c2d]'}`}>{t(product.available ? 'common.available' : 'common.soldOut')}</p>

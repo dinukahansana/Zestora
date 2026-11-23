@@ -15,7 +15,7 @@ npm run dev
 
 Open [the storefront](http://127.0.0.1:5173). Express exposes [GET /api/health](http://127.0.0.1:3001/api/health), also reachable [through Vite](http://127.0.0.1:5173/api/health). Press Ctrl+C to stop both development servers.
 
-The default configuration works without environment files. To override the API address, copy the root `.env.example` to `.env` and update `HOST` or `PORT`. Copy `apps/web/.env.example` to `apps/web/.env.local` and set `API_PROXY_TARGET` to the corresponding address. Restart both servers after changing settings.
+The default configuration starts the website in demo mode and the API health endpoint without environment files. To override the API address, copy the root `.env.example` to `.env` and update `HOST` or `PORT`. Copy `apps/web/.env.example` to `apps/web/.env.local` and set `API_PROXY_TARGET` to the corresponding address. Restart both servers after changing settings.
 
 | Command | Purpose |
 | --- | --- |
@@ -26,6 +26,14 @@ The default configuration works without environment files. To override the API a
 | `npm run test:web` | Run the storefront Playwright tests after installing a Chromium browser. |
 | `npm run start:api` | Run the compiled API after building. |
 | `npm run preview:web` | Serve the frontend build locally. Run the API separately for the proxied health endpoint. |
+
+## Connect a catalogue database
+
+Copy the root `.env.example` to `.env` and set `MONGODB_URI` to your Atlas or local MongoDB database. To populate a development database, run `npm run seed:demo`. Set `VITE_CATALOGUE_MODE=api` in `apps/web/.env.local`, then restart the app. `GET /api/ready` reports the connection state, and `/menu` displays published database records in API mode.
+
+To create the initial administrator, set `ADMIN_NAME`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD` in the ignored environment and run `npm run create:admin`. The command creates a new account and preserves an existing account with the same email. Remove the bootstrap password from local configuration after use.
+
+Use `npm run test:api` for the API suite. The first run downloads a temporary MongoDB binary. See [API documentation](docs/API_DOCUMENTATION.md) and [database schema](docs/DATABASE_SCHEMA.md).
 
 ## Repository layout
 

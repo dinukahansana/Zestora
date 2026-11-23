@@ -23,7 +23,8 @@
     "backMenu": "Back to menu",
     "demo": "Demo catalogue",
     "demoDetails": "Product listings, prices, and availability are for demonstration.",
-    "backHome": "Back to home"
+    "backHome": "Back to home",
+    "retry": "Try again"
   },
   "home": {
     "heroFirst": "Freshness in",
@@ -41,7 +42,6 @@
     "choices": "Sizes and add-ons",
     "local": "Tropical flavours",
     "seasonal": "Try the seasonal special",
-    "seasonalText": "Passionfruit and orange make a bright, tangy pair in our seasonal cooler.",
     "seasonalAction": "Explore the cooler",
     "popular": "Popular picks",
     "popularText": "A sample of favourites for different tastes.",
@@ -52,7 +52,8 @@
     "quoteOne": "The mango juice tastes like the best part of a ripe mango.",
     "quoteTwo": "I’d bring a friend for a smoothie and share a fruit bowl.",
     "questions": "Questions about Zestora?",
-    "contactAction": "Get in touch"
+    "contactAction": "Get in touch",
+    "more": "More from the menu"
   },
   "menu": {
     "title": "The menu",
@@ -69,7 +70,9 @@
     "none": "No products match your search.",
     "reset": "Clear filters",
     "count_one": "{{count}} product",
-    "count_other": "{{count}} products"
+    "count_other": "{{count}} products",
+    "loadError": "The catalogue could not be loaded.",
+    "emptyCatalogue": "The menu is being updated."
   },
   "product": {
     "ingredients": "Ingredients",

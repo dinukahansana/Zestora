@@ -16,6 +16,7 @@ export default defineConfig({
     command: 'npm run dev -- --port 4175',
     url: baseURL,
     env: {
+      VITE_CATALOGUE_MODE: 'demo',
       VITE_BUSINESS_EMAIL: 'hello@zestora.example',
       VITE_BUSINESS_MAP_URL: 'https://www.google.com/maps/search/?api=1&query=Colombo',
     },

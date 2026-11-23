@@ -3,17 +3,21 @@ import { domAnimation, LazyMotion, m, useReducedMotion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { categoryIcons, DemoLabel, ProductCard } from '../components/Storefront';
-import { categories, products } from '../content/catalogue';
+import { CatalogueMessage, useCatalogue } from '../content/useCatalogue';
 import { languageOf } from '../i18n';
 
 const categoryStyles = ['bg-sun/45', 'bg-blush', 'bg-moss', 'bg-lime/65', 'bg-sun/35', 'bg-blush'];
 const featureKeys = ['home.fruit', 'home.choices', 'home.local'];
-const popular = products.filter(product => ['golden-mango', 'cocoa-cloud', 'island-fruit-bowl'].includes(product.slug));
 
 export function HomePage() {
   const { t, i18n } = useTranslation();
   const language = languageOf(i18n.resolvedLanguage);
   const reducedMotion = useReducedMotion();
+  const catalogue = useCatalogue();
+  const { categories, products, demo } = catalogue.data ?? { categories: [], products: [], demo: false };
+  const featured = products.filter(product => product.featured);
+  const popular = demo ? products.filter(product => ['golden-mango', 'cocoa-cloud', 'island-fruit-bowl'].includes(product.slug)) : products.slice(0, 3);
+  const seasonal = products.find(product => product.category === 'seasonal' && product.available) ?? products.find(product => product.category === 'seasonal');
 
   return (
     <>
@@ -44,7 +48,7 @@ export function HomePage() {
         </div>
       </section>
 
-      <section className="container-wide py-10 sm:py-13" aria-labelledby="categories-heading">
+      {categories.length > 0 && <section className="container-wide py-10 sm:py-13" aria-labelledby="categories-heading">
         <div className="mb-5 flex items-center gap-2">
           <h2 id="categories-heading" className="font-display text-3xl">{t('home.categories')}</h2>
           <ArrowDownRight aria-hidden="true" className="text-muted" size={22} />
@@ -60,20 +64,22 @@ export function HomePage() {
             );
           })}
         </div>
-      </section>
+      </section>}
 
       <section className="border-y border-line bg-moss/30">
         <div className="container-wide section-space">
           <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
             <div>
-              <DemoLabel />
+              {demo && <DemoLabel />}
               <h2 className="display-title mt-3">{t('home.featured')}</h2>
               <p className="mt-2 text-muted">{t('home.featuredText')}</p>
             </div>
             <Link className="button button-outline" to="/menu">{t('home.viewAll')} <ArrowRight size={17} aria-hidden="true" /></Link>
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {products.filter(product => product.featured).map(product => <ProductCard key={product.slug} product={product} />)}
+            {!catalogue.data && <CatalogueMessage query={catalogue} />}
+            {catalogue.data && !products.length && <p className="rounded-xl border border-line bg-paper p-5 text-muted">{t('menu.emptyCatalogue')}</p>}
+            {(featured.length ? featured : products.slice(0, 3)).map(product => <ProductCard key={product.slug} product={product} />)}
           </div>
         </div>
       </section>
@@ -92,20 +98,20 @@ export function HomePage() {
         </div>
       </section>
 
-      <section className="container-wide">
+      {seasonal && <section className="container-wide">
         <div className="grid items-stretch overflow-hidden rounded-2xl bg-[#f6d59d] md:grid-cols-[1.12fr_1fr]">
           <div className="self-center px-6 py-9 sm:px-10">
             <h2 className="display-title">{t('home.seasonal')}</h2>
-            <p className="mt-3 max-w-lg text-ink/85">{t('home.seasonalText')}</p>
-            <Link className="button button-primary mt-5" to="/menu/passion-cooler">{t('home.seasonalAction')} <ArrowRight size={17} aria-hidden="true" /></Link>
+            <p className="mt-3 max-w-lg text-ink/85">{seasonal.description[language]}</p>
+            <Link className="button button-primary mt-5" to={`/menu/${seasonal.slug}`}>{t('home.seasonalAction')} <ArrowRight size={17} aria-hidden="true" /></Link>
           </div>
-          <img src="/images/passion.webp" alt="" loading="lazy" className="h-63 w-full object-cover object-center md:h-80" />
+          <img src={seasonal.image} alt="" loading="lazy" className="h-63 w-full object-cover object-center md:h-80" />
         </div>
-      </section>
+      </section>}
 
-      <section className="container-wide section-space">
-        <h2 className="display-title">{t('home.popular')}</h2>
-        <p className="mt-2 text-muted">{t('home.popularText')}</p>
+      {popular.length > 0 && <section className="container-wide section-space">
+        <h2 className="display-title">{t(demo ? 'home.popular' : 'home.more')}</h2>
+        {demo && <p className="mt-2 text-muted">{t('home.popularText')}</p>}
         <div className="mt-5 grid gap-3 sm:grid-cols-3">
           {popular.map(product => (
             <Link to={`/menu/${product.slug}`} key={product.slug} className="flex items-center gap-3 rounded-xl border border-line bg-paper p-2.5 font-extrabold hover:bg-moss/40">
@@ -115,7 +121,7 @@ export function HomePage() {
             </Link>
           ))}
         </div>
-      </section>
+      </section>}
 
       <section className="bg-blush/50">
         <div className="container-wide section-space">

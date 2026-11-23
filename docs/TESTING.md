@@ -10,6 +10,10 @@ Verify the compiled API separately with `npm run start:api`. Start `npm run prev
 
 Install Chromium once with `npx playwright install chromium`, then run `npm run test:web` from the root. Set `PLAYWRIGHT_CHROME_PATH` to use an existing Chrome executable. The suite starts a separate development server with synthetic contact settings and exercises desktop and mobile routing, keyboard interaction, Sinhala persistence, catalogue filters, product options, and information pages.
 
+## API integration tests
+
+Run `npm run test:api`. Vitest orchestrates the suite, Supertest exercises Express routes, and a temporary MongoDB replica set stores the test records. The first invocation downloads its MongoDB binary. The tests cover seeding, public data boundaries, cookies, registration, login, logout, authorization, expiry, and validation.
+
 ## Planned test coverage
 
 | Tool | Planned use |

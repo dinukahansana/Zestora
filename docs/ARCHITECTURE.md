@@ -2,7 +2,7 @@
 
 ## Current system
 
-The repository has two npm workspaces. `apps/web` serves the bilingual React storefront through Vite. React Router matches storefront paths and i18next resolves interface and language preference settings. The current catalogue is explicitly labeled demonstration data. See [storefront](STOREFRONT.md). `apps/api` defines the Express application in `src/app.ts` and starts the listener in `src/server.ts`. Separating the app from the listener makes the routes easier to test later.
+The repository has two npm workspaces. `apps/web` serves the bilingual React storefront through Vite. React Router matches storefront paths and i18next resolves interface and language preference settings. The storefront supports the local demo catalogue and a database-backed catalogue mode. In API mode, TanStack Query loads and caches the result of `/api/catalogue` and exposes loading and error states. See [storefront](STOREFRONT.md). `apps/api` defines the Express application in `src/app.ts` and starts the listener in `src/server.ts`. Separating the app from the listener makes the routes easier to test later.
 
 ~~~mermaid
 flowchart LR
@@ -16,7 +16,7 @@ In local development, the browser requests `/api/health` at the same address as 
 ## Planned system
 
 - **React** handles navigation, display, cart interactions, forms, and translations. The API supplies data and validates requests.
-- **Express and MongoDB Atlas** own orders, pricing, payments, permissions, inventory, and reporting queries. Mongoose defines persistence models.
+- **Express and MongoDB currently** serve catalogue and account data. The backend will own orders, pricing, payments, permissions, inventory, and reporting queries. Mongoose defines persistence models.
 - **Cloudinary** stores images. MongoDB stores image references and business records.
 - **PayHere** receives payment requests and sends status notifications to a verified backend endpoint. The browser return page reads backend payment state.
 - **n8n** orchestrates notifications, schedules, and calls to approved services. Use an outbox to record a business change and its pending automation event together where appropriate.

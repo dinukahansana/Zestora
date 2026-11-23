@@ -3,9 +3,13 @@
 ## Current baseline
 
 - Local servers bind to loopback by default. Express omits the framework identification header.
-- The only API route is public liveness and returns a service identifier and status.
+- Public health and readiness responses expose service status. Public catalogue queries return published records and select public fields.
 - Git ignores local environment files, common key and credential files, build output, and logs. The two `.env.example` files contain only local defaults.
 - Keep real API keys, signing secrets, connection strings, passwords, merchant credentials, and n8n credentials outside the repository. Check the staged diff before each commit.
+
+- Accounts use salted scrypt hashes. Session cookies are HTTP-only and secure in production. MongoDB stores a hash of each random session token and expires it with a TTL index. The API still checks expiry on every session read.
+- Helmet supplies security headers. Zod validates requests, specified origins can mutate records, authentication requests are throttled, and admin access requires an authorized session.
+- Production should route browser API requests through the storefront origin for same-site cookies. Set only the trusted reverse proxy hop count and the allowed frontend origins for the deployment.
 
 ## Implementation requirements
 

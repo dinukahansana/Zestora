@@ -22,6 +22,7 @@ export interface Product {
   image: string;
   featured: boolean;
   available: boolean;
+  demo?: boolean;
   sizes: Choice[];
   addOns: Choice[];
 }
@@ -102,8 +103,6 @@ export const products: Product[] = [
     sizes: drinkSizes(740, 890), addOns: [],
   },
 ];
-
-export const categoriesBySlug = new Map(categories.map(category => [category.slug, category]));
 
 export function startingPrice(product: Product) {
   return Math.min(...product.sizes.map(size => size.price));

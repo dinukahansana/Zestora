@@ -25,6 +25,16 @@ The starter page and health endpoint are the two implemented features. MongoDB A
 | Contact | Shop contact channels and email-draft form work with public business settings. A live shop supplies its own contact information and approved policies. |
 | Checks | TypeScript, both production builds, and six Chromium browser scenarios passed. Reviewed desktop and mobile homepage layouts. |
 
+## Phase 2
+
+| Area | Status |
+| --- | --- |
+| Data | Mongoose models and indexes for categories, products, users, and sessions. Seed and explicit admin bootstrap commands. |
+| Catalogue | Published product and category APIs with validated filters, a health and readiness check, and database-backed storefront mode. |
+| Accounts | Registration, login, logout, session lookup, and server-side role protection. Browser account pages are part of Phase 3. |
+| Security | Salted scrypt password hashes, hashed and expiring sessions, production HTTPS cookies, request validation, authentication rate limits, origin checks, and standard security headers. |
+| Verification | Production builds and type checks, eight API cases against a temporary MongoDB replica set, six storefront tests, and an API-backed browser smoke check. MongoDB Atlas setup is documented for a hosted environment. |
+
 ## Next milestone
 
-Phase 2 connects Express to MongoDB, defines catalogue data and validation, adds authentication and authorization, exposes product and category endpoints, and switches the storefront to the API when configured.
+Phase 3 adds the cart, checkout with server-calculated prices and coupons, guest tracking, order history, and account pages.

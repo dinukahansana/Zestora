@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { PageHeading } from '../components/Storefront';
-import { products } from '../content/catalogue';
+import { CatalogueMessage, useCatalogue } from '../content/useCatalogue';
 import { languageOf } from '../i18n';
 
 export function AboutPage() {
@@ -30,6 +30,8 @@ export function AboutPage() {
 export function GalleryPage() {
   const { t, i18n } = useTranslation();
   const language = languageOf(i18n.resolvedLanguage);
+  const catalogue = useCatalogue();
+  const products = catalogue.data?.products ?? [];
   const photos = [{ src: '/images/counter.webp', alt: t('about.counterAlt') }, ...products.map(product => ({ src: product.image, alt: product.name[language] }))];
   const [selected, setSelected] = useState<number | null>(null);
   const dialog = useRef<HTMLDialogElement>(null);
@@ -43,6 +45,7 @@ export function GalleryPage() {
     <>
       <PageHeading title={t('gallery.title')}><p>{t('gallery.intro')}</p></PageHeading>
       <div className="container-wide section-space grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {!catalogue.data && <CatalogueMessage query={catalogue} />}
         {photos.map((item, index) => (
           <button className="group relative overflow-hidden rounded-2xl bg-moss text-left" key={item.src} type="button" aria-label={t('gallery.open', { name: item.alt })} onClick={() => setSelected(index)}>
             <img src={item.src} alt="" className="aspect-[4/3] w-full object-cover transition-transform duration-300 motion-safe:group-hover:scale-[1.04]" loading="lazy" />

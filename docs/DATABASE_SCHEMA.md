@@ -1,15 +1,18 @@
 # Database schema
 
-MongoDB Atlas and Mongoose are planned for the backend and database milestone. Phase 0 has no database connection or persisted records. The model groups below describe the intended scope and will be refined with each feature.
+Zestora uses MongoDB and Mongoose. Mongoose describes document fields and indexes and turns database records into JavaScript objects. A production or demo deployment can connect to MongoDB Atlas through its server-side connection string. Local integration tests launch a temporary real MongoDB replica set.
 
-| Model group | Planned records |
+## Implemented collections
+
+| Collection | Key fields and indexes |
 | --- | --- |
-| Identity | Users, customer profiles where needed, and saved addresses |
-| Catalogue | Products, categories, reviews, and media references |
-| Commerce | Orders, payments, coupons, and delivery details |
-| Operations | Business settings, inventory items, notifications, and automation events |
-| AI outputs | Business reports, feedback analyses, marketing drafts, and conversation records only where retention is necessary |
+| `users` | Name, normalized unique email, password hash, role, timestamps. The hash is excluded from ordinary queries. |
+| `sessions` | Indexed user reference, unique token hash, expiry date, and timestamps. MongoDB has a TTL index for cleanup. Session reads also check expiry immediately. |
+| `categories` | Unique slug, English/Sinhala name, position, publication flag, timestamps. |
+| `products` | Unique slug, category slug, bilingual fields, image URL, publication, demo and availability flags, sizes, add-ons, starting price, and timestamps. The search index covers publication, category, and starting price. |
 
-Products will reference categories and identify size and add-on choices. Order items should preserve the accepted product selections and prices so catalogue edits do not rewrite order history. Persist separate order and payment states and retain their association. Keep generated AI analyses linked to their source records without altering them.
+Products link to categories with a stable slug. The public API filters out unpublished categories and their products. Prices are whole LKR in this schema. Demo seeding inserts absent slugs and keeps existing documents. The catalogue writer validates choices and calculates starting price from the cheapest size.
 
-Choose unique constraints and query indexes with the actual access patterns. Likely candidates are public order references, payment provider identifiers, and outbox event IDs. Document exact fields, relationships, indexes, and migration or seed steps when each model is added.
+## Planned collections
+
+Customer addresses, orders, payments, discounts, delivery and business settings, inventory, reviews, notifications, automation events, and AI outputs are introduced with their features. Order items will preserve accepted choices and prices independently of later catalogue changes. Order and payment status will be tracked separately.

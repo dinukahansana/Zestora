@@ -2,7 +2,8 @@ import { ArrowUpRight, Citrus, CupSoda, Leaf, Milk, Salad, Sparkles } from 'luci
 import { useId, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
-import { categoriesBySlug, formatPrice, startingPrice, type Product } from '../content/catalogue';
+import { formatPrice, startingPrice, type Product } from '../content/catalogue';
+import { useCatalogue } from '../content/useCatalogue';
 import { languageOf } from '../i18n';
 
 export const categoryIcons = new Map([
@@ -35,6 +36,7 @@ export function ProductCard({ product }: { product: Product }) {
   const { t, i18n } = useTranslation();
   const language = languageOf(i18n.resolvedLanguage);
   const name = product.name[language];
+  const categoryName = useCatalogue().data?.categories.find(category => category.slug === product.category)?.name[language];
   const titleId = useId();
   return (
     <article className="group overflow-hidden rounded-2xl border border-line bg-paper">
@@ -50,7 +52,7 @@ export function ProductCard({ product }: { product: Product }) {
           />
         </div>
         <div className="p-4 sm:p-5">
-          <p className="text-xs font-extrabold text-muted">{categoriesBySlug.get(product.category)?.name[language]}</p>
+          <p className="text-xs font-extrabold text-muted">{categoryName}</p>
           <h3 id={titleId} className="mt-1 font-display text-2xl group-hover:underline">{name}</h3>
           <p className="mt-1.5 min-h-10 text-sm leading-5 text-muted">{product.description[language]}</p>
           <div className="mt-3 flex items-center justify-between gap-2 border-t border-line pt-3.5">

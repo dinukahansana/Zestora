@@ -3,6 +3,7 @@ import { Suspense, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, NavLink, Outlet, useLocation } from 'react-router';
 import { contact } from '../content/contact';
+import { useCatalogue } from '../content/useCatalogue';
 import { languageOf } from '../i18n';
 
 const links = [
@@ -104,6 +105,7 @@ function Header() {
 
 function Footer() {
   const { t, i18n } = useTranslation();
+  const demo = useCatalogue().data?.demo;
   const hours = contact.hours[languageOf(i18n.resolvedLanguage)] ?? contact.hours.en;
   return (
     <footer className="bg-forest pt-13 text-cream">
@@ -131,7 +133,7 @@ function Footer() {
       </div>
       <div className="container-wide mt-11 flex flex-wrap justify-between gap-2 border-t border-white/15 py-5 text-xs text-cream/75">
         <p>{t('footer.copyright', { year: new Date().getFullYear() })}</p>
-        <p>{t('footer.demo')}</p>
+        {demo && <p>{t('footer.demo')}</p>}
       </div>
     </footer>
   );

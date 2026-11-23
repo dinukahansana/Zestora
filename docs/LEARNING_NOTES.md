@@ -22,3 +22,14 @@
 | Search parameters | `/menu?category=juices` records a filter in the URL. Refreshing or sharing that address preserves the same catalogue view. |
 | Derived state | The product page stores chosen size, add-ons, and quantity. It calculates a preview total from those inputs whenever a choice changes. The ordering phase will validate and compute actual totals on the API. |
 | Browser verification | Playwright interacts with product controls, navigates pages, checks translated content, and repeats the smoke flow at phone size. |
+
+## Phase 2
+
+| Concept | Zestora example |
+| --- | --- |
+| MongoDB document | A product document holds its description in both languages and a list of its sizes. Products refer to a category by its slug. |
+| Mongoose model and index | The catalogue model describes product fields. A unique email index prevents two requests from creating duplicate accounts. |
+| Input validation | Zod checks the shape of a request before it reaches MongoDB. Account registration accepts a name, email, and password. The API assigns the role. |
+| Password vs. session | Login checks a salted password hash. The HTTP-only cookie then carries a separate random token. The API compares a hash of that token and checks that the associated session still exists. |
+| Server state | TanStack Query fetches the catalogue, shares it across pages, and can retry after a temporary outage. It treats an API failure as an error state. |
+| Readiness | A health check shows Express can answer. A readiness check shows it can reach the database required for products and accounts. |

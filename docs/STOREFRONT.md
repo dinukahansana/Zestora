@@ -2,7 +2,7 @@
 
 ## Routes and data
 
-React Router renders the homepage, menu, product details, About, Gallery, Contact, FAQ, and four policy previews inside the shared header and footer. `src/content/catalogue.ts` holds six demonstration items, their prices, ingredients, localized names, options, and availability. The menu stores its search, category, and sort settings in the URL. Prices use LKR formatting.
+React Router renders the homepage, menu, product details, About, Gallery, Contact, FAQ, and four policy previews inside the shared header and footer. `src/content/catalogue.ts` holds six demonstration items, their prices, ingredients, localized names, options, and availability. Set `VITE_CATALOGUE_MODE=api` to read published categories and products from Express and MongoDB. The query shows loading and retry states if the API is unavailable. The menu stores its search, category, and sort settings in the URL. Prices use LKR formatting.
 
 The demo product preview calculates `(size price + add-ons) × quantity` in the browser. During the ordering phase, the API will calculate and validate the actual amount. The gallery uses a dialog with keyboard dismissal. Product imagery is WebP and below-the-fold images load lazily.
 
