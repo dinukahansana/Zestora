@@ -11,6 +11,9 @@
 - Helmet supplies security headers. Zod validates requests, specified origins can mutate records, authentication requests are throttled, and admin access requires an authorized session.
 - Production should route browser API requests through the storefront origin for same-site cookies. Set only the trusted reverse proxy hop count and the allowed frontend origins for the deployment.
 
+- Checkout recomputes fees and totals on the API. A scoped checkout key deduplicates a repeated order, and MongoDB stores coupon redemption with the order in one transaction.
+- Guest order access requires a separate key stored as a hash. Customer order and address requests check the active account owner. Password reset tokens expire, are single-use, and revoke active sessions.
+
 ## Implementation requirements
 
 - Hash passwords, use secure sessions and role-based authorization, and use a secure setup process for the initial administrator. Require guest order verification.

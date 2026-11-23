@@ -2,6 +2,7 @@ import { ChevronDown, X, ZoomIn } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
+import { orderingEnabled } from '../commerce/api';
 import { PageHeading } from '../components/Storefront';
 import { CatalogueMessage, useCatalogue } from '../content/useCatalogue';
 import { languageOf } from '../i18n';
@@ -79,7 +80,7 @@ export function FaqPage() {
                 {t(`faq.${item}Q`)}
                 <ChevronDown size={18} className="shrink-0 group-open:rotate-180" aria-hidden="true" />
               </summary>
-              <p className="mt-3 leading-relaxed text-muted">{t(`faq.${item}A`)}</p>
+              <p className="mt-3 leading-relaxed text-muted">{t(item === 'two' && orderingEnabled ? 'faq.twoOrdering' : `faq.${item}A`)}</p>
             </details>
           ))}
         </div>

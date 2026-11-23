@@ -35,3 +35,23 @@ The public user object is `{ id, name, email, role }`. Registered accounts start
 ## Errors
 
 Error responses use `{ error: { code, message, fields? } }`. Invalid input uses 400, missing sessions 401, insufficient role or denied mutation origins 403, unavailable records 404, duplicate account creation 409, authentication throttling 429, and database unavailability 503. Validation problems can include `fields: [{ field, message }]`.
+
+## Ordering and profiles
+
+| Method and path | Request and response |
+| --- | --- |
+| `GET /api/shop/checkout` | Pickup and delivery availability, delivery zone names and fees, and minimum order. |
+| `POST /api/orders/quote` | Send `{ items, fulfillment, coupon? }`. Each item is `{ productSlug, sizeId, addOnIds, quantity }`. Fulfilment is `{ type: "pickup" }` or `{ type: "delivery", zoneId }`. Returns priced items, totals, and LKR currency. |
+| `POST /api/orders` | Add `customer: {name,email,phone}`, `expectedTotal`, a UUID `checkoutKey`, and a guest key for a guest. Delivery also requires `address` and allows `instructions`. Either option can include an ISO `preferredAt`. Optional `notes` and coupon are accepted. Returns `{ order }` with HTTP 201, or HTTP 200 for an identical retry. |
+| `POST /api/orders/track` | Send `{ reference, key }` for an order placed without an account. |
+| `GET /api/orders/mine` | Returns the signed-in customer's latest 100 orders as `{ orders }`. |
+| `GET /api/orders/mine/:reference` | Returns `{ order }` only to its owner. |
+| `GET /api/account` | Returns `{ user, addresses }` to the signed-in customer. |
+| `PATCH /api/account` | Update the account name with `{ name }`. |
+| `POST /api/account/addresses` | Add a saved `{ label, address }`. |
+| `PATCH /api/account/addresses/:id` | Update a saved `{ label, address }` owned by the customer. |
+| `DELETE /api/account/addresses/:id` | Remove a saved address owned by the customer. Returns 204. |
+| `POST /api/auth/forgot-password` | Send `{ email, language? }`. Returns 202 if email delivery is configured. |
+| `POST /api/auth/reset-password` | Send `{ key, password }`. Consumes the expiring key and revokes existing sessions. Returns 204. |
+
+Checkout recalculates every price and delivery fee. A total change returns `TOTAL_CHANGED` with HTTP 409. A completed checkout keeps an immutable pricing snapshot of each product and option. The guest tracking key is a URL-safe 32-byte random string. The browser retains the key and the API stores its hash. A reference alone cannot retrieve a guest order.

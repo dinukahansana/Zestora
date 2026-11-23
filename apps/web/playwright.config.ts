@@ -4,6 +4,8 @@ const baseURL = 'http://127.0.0.1:4175';
 
 export default defineConfig({
   testDir: './tests',
+  testMatch: '**/storefront.spec.ts',
+  outputDir: './test-results/storefront',
   use: {
     baseURL,
     viewport: { width: 1440, height: 900 },

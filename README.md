@@ -2,7 +2,7 @@
 
 **Freshness in Every Sip.**
 
-Zestora is a configurable ordering and business management platform for juice bars and other beverage shops. It has an English/Sinhala storefront with a demo catalogue. The roadmap also covers ordering, administration, payments, and AI-assisted workflows.
+Zestora is a configurable ordering and business management platform for juice bars and other beverage shops. It has an English/Sinhala storefront with a demo catalogue. With a database connected, customers can place pickup or delivery orders, track orders, and manage accounts. The roadmap also covers administration, PayHere, and AI-assisted workflows.
 
 ## Run locally
 
@@ -29,11 +29,13 @@ The default configuration starts the website in demo mode and the API health end
 
 ## Connect a catalogue database
 
-Copy the root `.env.example` to `.env` and set `MONGODB_URI` to your Atlas or local MongoDB database. To populate a development database, run `npm run seed:demo`. Set `VITE_CATALOGUE_MODE=api` in `apps/web/.env.local`, then restart the app. `GET /api/ready` reports the connection state, and `/menu` displays published database records in API mode.
+Copy the root `.env.example` to `.env` and set `MONGODB_URI` to your Atlas or local MongoDB replica set. To populate a development database, run `npm run seed:demo`. Set `VITE_CATALOGUE_MODE=api` in `apps/web/.env.local`, then restart the app. `GET /api/ready` reports the connection state, and `/menu` displays published database records in API mode.
 
 To create the initial administrator, set `ADMIN_NAME`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD` in the ignored environment and run `npm run create:admin`. The command creates a new account and preserves an existing account with the same email. Remove the bootstrap password from local configuration after use.
 
-Use `npm run test:api` for the API suite. The first run downloads a temporary MongoDB binary. See [API documentation](docs/API_DOCUMENTATION.md) and [database schema](docs/DATABASE_SCHEMA.md).
+The demo seed adds a Colombo delivery zone and the `FRESH10` sample coupon. Set `SITE_ORIGIN`, `SMTP_URL`, and `MAIL_FROM` to enable password reset emails. Supply SMTP credentials only in the ignored environment.
+
+Use `npm run test:api` for the API suite and `npm run test:shop` for the browser checkout suite. The first run downloads a temporary MongoDB binary. See [API documentation](docs/API_DOCUMENTATION.md) and [database schema](docs/DATABASE_SCHEMA.md).
 
 ## Repository layout
 

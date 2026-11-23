@@ -2,6 +2,7 @@ import { MotionConfig } from 'framer-motion';
 import { lazy } from 'react';
 import { Route, Routes } from 'react-router';
 import { Layout } from './components/Layout';
+import { LiveOrdering } from './commerce/Summary';
 import { HomePage } from './pages/Home';
 const CataloguePage = lazy(() => import('./pages/Catalogue').then(module => ({ default: module.CataloguePage })));
 const ProductPage = lazy(() => import('./pages/Catalogue').then(module => ({ default: module.ProductPage })));
@@ -11,6 +12,13 @@ const GalleryPage = lazy(() => import('./pages/Information').then(module => ({ d
 const NotFoundPage = lazy(() => import('./pages/Information').then(module => ({ default: module.NotFoundPage })));
 const PolicyPage = lazy(() => import('./pages/Information').then(module => ({ default: module.PolicyPage })));
 const ContactPage = lazy(() => import('./pages/Contact'));
+
+const CartPage = lazy(() => import('./pages/CartCheckout').then(module => ({ default: module.CartPage })));
+const CheckoutPage = lazy(() => import('./pages/CartCheckout').then(module => ({ default: module.CheckoutPage })));
+const AccountPage = lazy(() => import('./pages/Account').then(module => ({ default: module.AccountPage })));
+const ConfirmationPage = lazy(() => import('./pages/Tracking').then(module => ({ default: module.ConfirmationPage })));
+const TrackingPage = lazy(() => import('./pages/Tracking').then(module => ({ default: module.TrackingPage })));
+const PasswordPage = lazy(() => import('./pages/Tracking').then(module => ({ default: module.PasswordPage })));
 
 export function App() {
   return (
@@ -28,6 +36,13 @@ export function App() {
           <Route path="terms" element={<PolicyPage policy="terms" />} />
           <Route path="refunds" element={<PolicyPage policy="refunds" />} />
           <Route path="cancellation" element={<PolicyPage policy="cancellation" />} />
+          <Route path="cart" element={<LiveOrdering><CartPage /></LiveOrdering>} />
+          <Route path="checkout" element={<LiveOrdering><CheckoutPage /></LiveOrdering>} />
+          <Route path="order-confirmation" element={<LiveOrdering><ConfirmationPage /></LiveOrdering>} />
+          <Route path="track" element={<LiveOrdering><TrackingPage /></LiveOrdering>} />
+          <Route path="account" element={<LiveOrdering><AccountPage /></LiveOrdering>} />
+          <Route path="forgot-password" element={<LiveOrdering><PasswordPage /></LiveOrdering>} />
+          <Route path="reset-password" element={<LiveOrdering><PasswordPage reset /></LiveOrdering>} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>

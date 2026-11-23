@@ -14,6 +14,10 @@ Install Chromium once with `npx playwright install chromium`, then run `npm run 
 
 Run `npm run test:api`. Vitest orchestrates the suite, Supertest exercises Express routes, and a temporary MongoDB replica set stores the test records. The first invocation downloads its MongoDB binary. The tests cover seeding, public data boundaries, cookies, registration, login, logout, authorization, expiry, and validation.
 
+## Checkout integration tests
+
+Run `npm run test:shop` with Chromium. The suite starts Vite, Express, and a temporary MongoDB replica set. It exercises real guest delivery, account pickup, saved addresses, tracking, and reordering. API tests also check idempotency, coupon usage races, authorization, and the lifetime of a password reset link.
+
 ## Planned test coverage
 
 | Tool | Planned use |

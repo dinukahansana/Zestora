@@ -2,12 +2,16 @@ import cors from 'cors';
 import express, { type RequestHandler } from 'express';
 import helmet from 'helmet';
 import { adminCatalogueRouter, authRouter } from './auth/routes.ts';
+import { passwordResetRouter } from './auth/passwordReset.ts';
+import { profileRouter } from './auth/profile.ts';
 import { catalogueRouter } from './catalogue/routes.ts';
 import type { AppConfig } from './config.ts';
 import { databaseReady } from './database.ts';
 import { errorHandler, HttpError, notFound } from './http.ts';
+import { createMailer, type SendEmail } from './mail.ts';
+import { orderingRouter } from './ordering/routes.ts';
 
-export function createApp(config: AppConfig) {
+export function createApp(config: AppConfig, sendEmail: SendEmail | undefined = createMailer(config)) {
   const app = express();
   if (config.trustProxyHops) app.set('trust proxy', config.trustProxyHops);
   app.disable('x-powered-by');
@@ -40,7 +44,10 @@ export function createApp(config: AppConfig) {
     if (databaseReady()) next();
     else next(new HttpError(503, 'DATABASE_UNAVAILABLE', 'The database is unavailable.'));
   };
-  api.use('/auth', requireDatabase, authRouter(config));
+  api.use('/auth', requireDatabase, authRouter(config), passwordResetRouter(config, sendEmail));
+  api.use('/account', requireDatabase, profileRouter(config));
+  api.use(['/shop/checkout', '/orders'], requireDatabase);
+  api.use(orderingRouter(config));
   api.use('/admin', requireDatabase, adminCatalogueRouter(config));
   api.use(['/catalogue', '/products', '/categories'], requireDatabase);
   api.use(catalogueRouter);

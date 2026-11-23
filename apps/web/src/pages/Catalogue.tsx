@@ -2,6 +2,8 @@ import { ArrowLeft, Search } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useParams, useSearchParams } from 'react-router';
+import { orderingEnabled } from '../commerce/api';
+import { useCart } from '../commerce/cart';
 import { DemoLabel, PageHeading, ProductCard } from '../components/Storefront';
 import { formatPrice, startingPrice, type Product } from '../content/catalogue';
 import { CatalogueMessage, useCatalogue } from '../content/useCatalogue';
@@ -93,6 +95,8 @@ function ProductOptions({ product }: { product: Product }) {
   const [sizeId, setSizeId] = useState(product.sizes[0].id);
   const [addOns, setAddOns] = useState<string[]>([]);
   const [quantity, setQuantity] = useState(1);
+  const [added, setAdded] = useState<boolean>();
+  const add = useCart(state => state.add);
   const size = product.sizes.find(option => option.id === sizeId) ?? product.sizes[0];
   const addOnPrice = product.addOns.reduce((total, option) => total + (addOns.includes(option.id) ? option.price : 0), 0);
 
@@ -133,7 +137,11 @@ function ProductOptions({ product }: { product: Product }) {
         <span className="font-extrabold">{t('product.total')}</span>
         <strong className="text-xl">{formatPrice((size.price + addOnPrice) * quantity, language)}</strong>
       </div>
-      <p className="mt-2 text-sm text-muted">{t('product.preview')}</p>
+      {orderingEnabled && product.available ? <div className="mt-4 flex flex-wrap items-center gap-2.5">
+        <button type="button" className="button button-primary" onClick={() => setAdded(add({ productSlug: product.slug, sizeId, addOnIds: addOns, quantity }))}>{t('commerce.add')}</button>
+        {added && <Link to="/cart" className="button button-outline">{t('commerce.cart')}</Link>}
+        {added !== undefined && <p className="w-full text-sm text-muted" role="status">{t(added ? 'commerce.added' : 'commerce.cartLimit')}</p>}
+      </div> : <p className="mt-2 text-sm text-muted">{t('product.preview')}</p>}
     </section>
   );
 }

@@ -35,6 +35,16 @@ The starter page and health endpoint are the two implemented features. MongoDB A
 | Security | Salted scrypt password hashes, hashed and expiring sessions, production HTTPS cookies, request validation, authentication rate limits, origin checks, and standard security headers. |
 | Verification | Production builds and type checks, eight API cases against a temporary MongoDB replica set, six storefront tests, and an API-backed browser smoke check. MongoDB Atlas setup is documented for a hosted environment. |
 
+## Phase 3
+
+| Area | Status |
+| --- | --- |
+| Cart | Browser-persisted cart with size, add-ons, quantity, and removal. |
+| Checkout | Guest and signed-in pickup or delivery, server quotes, coupon and delivery calculations, one-time checkout keys, and order confirmation. Cash payments are recorded as pending at order creation. |
+| Tracking | Guest reference plus tracking key. Signed-in customers see their own orders and can reorder from history. |
+| Accounts | Registration, sign-in and sign-out, profile name, saved addresses, and single-use reset links. External mail delivery uses the configured SMTP service. |
+| Verification | Type checks, both builds, thirteen API cases, six storefront cases, and two browser orders against a local MongoDB replica set. Reset email contents and token consumption were verified with a test mailer. |
+
 ## Next milestone
 
-Phase 3 adds the cart, checkout with server-calculated prices and coupons, guest tracking, order history, and account pages.
+Phase 4 adds the administrator dashboard, catalogue, orders, customers, coupons, business settings, reports, and stock management.

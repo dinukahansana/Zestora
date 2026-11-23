@@ -16,3 +16,13 @@ Products link to categories with a stable slug. The public API filters out unpub
 ## Planned collections
 
 Customer addresses, orders, payments, discounts, delivery and business settings, inventory, reviews, notifications, automation events, and AI outputs are introduced with their features. Order items will preserve accepted choices and prices independently of later catalogue changes. Order and payment status will be tracked separately.
+
+## Ordering collections
+
+| Collection | Key fields and indexes |
+| --- | --- |
+| `orders` | Unique public reference and checkout key, buyer and fulfilment details, optional account owner, hashed guest key, immutable product and price snapshots, total breakdown, and separate order and payment status. |
+| `shops` | Unique shop key, enabled fulfilment modes, localized delivery zones with fees, and minimum shopping subtotal. |
+| `coupons` | Unique normalized code, percentage or fixed value, minimum order, enabled flag, expiry and usage limit, and number redeemed. |
+
+Saved addresses and the current hashed password-reset key live on the user document. The order and coupon counter commit in the same transaction. Use Atlas or another MongoDB replica set for ordering and password reset transactions.

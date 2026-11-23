@@ -33,3 +33,14 @@
 | Password vs. session | Login checks a salted password hash. The HTTP-only cookie then carries a separate random token. The API compares a hash of that token and checks that the associated session still exists. |
 | Server state | TanStack Query fetches the catalogue, shares it across pages, and can retry after a temporary outage. It treats an API failure as an error state. |
 | Readiness | A health check shows Express can answer. A readiness check shows it can reach the database required for products and accounts. |
+
+## Phase 3
+
+| Concept | Zestora example |
+| --- | --- |
+| Shared browser state | Zustand keeps the selected items, sizes, add-ons, and quantities in browser storage. Reloading the page restores the cart. |
+| Server-side pricing | Express reads current product options, applies the coupon, and adds the delivery fee. Checkout asks you to review a changed total before creating the order. |
+| Transaction | MongoDB saves the order and redeems the coupon together. That prevents two customers from claiming the last use of a coupon. |
+| Idempotency | The browser sends a unique checkout key. If a connection drops, an identical retry returns the same order instead of placing another one. |
+| Guest access | A public order reference identifies the order. A separate tracking key proves access. Signed-in customers use their session for their own orders. |
+| Password reset | A time-limited email link carries a single-use key. Resetting the password consumes the key and ends previous sessions. |

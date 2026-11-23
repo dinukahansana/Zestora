@@ -8,6 +8,9 @@ interface UserRecord {
   email: string;
   passwordHash: string;
   role: Role;
+  addresses?: { _id: Types.ObjectId; label: string; address: string }[];
+  resetHash?: string;
+  resetExpiry?: Date;
 }
 
 const userSchema = new Schema<UserRecord>({
@@ -15,6 +18,9 @@ const userSchema = new Schema<UserRecord>({
   email: { type: String, required: true, trim: true, lowercase: true, unique: true, maxlength: 254 },
   passwordHash: { type: String, required: true, select: false },
   role: { type: String, enum: roles, default: 'customer', required: true },
+  addresses: [{ label: { type: String, required: true }, address: { type: String, required: true } }],
+  resetHash: { type: String, select: false, sparse: true, index: true },
+  resetExpiry: { type: Date, select: false },
 }, { timestamps: true });
 
 interface SessionRecord {

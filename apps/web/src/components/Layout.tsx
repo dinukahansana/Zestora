@@ -1,7 +1,9 @@
-import { Citrus, Globe2, Menu, X } from 'lucide-react';
+import { Citrus, Globe2, Menu, ShoppingBag, UserRound, X } from 'lucide-react';
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, NavLink, Outlet, useLocation } from 'react-router';
+import { orderingEnabled } from '../commerce/api';
+import { useCart } from '../commerce/cart';
 import { contact } from '../content/contact';
 import { useCatalogue } from '../content/useCatalogue';
 import { languageOf } from '../i18n';
@@ -40,8 +42,10 @@ function Header() {
   const menuButton = useRef<HTMLButtonElement>(null);
   const language = languageOf(i18n.resolvedLanguage);
 
-  function renderLinks() {
-    return links.map(({ path, name }) => (
+  const cartCount = useCart(state => state.items.reduce((count, item) => count + item.quantity, 0));
+  function renderLinks(mobile = false) {
+    const availableLinks = mobile && orderingEnabled ? [...links, { path: '/cart', name: 'commerce.cart' }, { path: '/account', name: 'account.title' }, { path: '/track', name: 'commerce.track' }] : links;
+    return availableLinks.map(({ path, name }) => (
       <NavLink
         key={path}
         to={path}
@@ -77,7 +81,10 @@ function Header() {
               <option value="si" lang="si">සිංහල</option>
             </select>
           </div>
-          <Link className="button button-primary hidden xl:inline-flex" to="/menu">{t('nav.order')}</Link>
+          {orderingEnabled ? <>
+            <Link to="/account" aria-label={t('account.title')} className="hidden size-10 place-items-center rounded-full border border-line sm:grid"><UserRound size={17} aria-hidden="true" /></Link>
+            <Link to="/cart" aria-label={t('commerce.cart')} className="hidden min-h-10 items-center gap-1 rounded-full border border-line px-3 text-xs font-extrabold sm:inline-flex"><ShoppingBag size={17} aria-hidden="true" /><span>{cartCount}</span></Link>
+          </> : <Link className="button button-primary hidden xl:inline-flex" to="/menu">{t('nav.order')}</Link>}
           <button
             ref={menuButton}
             type="button"
@@ -97,7 +104,7 @@ function Header() {
         hidden={!open}
         className="border-t border-line px-5 py-4 lg:hidden"
       >
-        <div className="flex flex-col gap-1">{renderLinks()}</div>
+        <div className="flex flex-col gap-1">{renderLinks(true)}</div>
       </nav>
     </header>
   );
@@ -120,7 +127,7 @@ function Footer() {
         </section>
         <section>
           <h2 className="mb-3 text-sm font-extrabold text-lime">{t('footer.help')}</h2>
-          <ul className="space-y-2 text-sm">{policies.map(link => <li key={link.path}><Link className="hover:underline" to={link.path}>{t(link.name)}</Link></li>)}</ul>
+          <ul className="space-y-2 text-sm">{policies.map(link => <li key={link.path}><Link className="hover:underline" to={link.path}>{t(link.name)}</Link></li>)}{orderingEnabled && <li><Link className="hover:underline" to="/track">{t('commerce.track')}</Link></li>}</ul>
         </section>
         <section>
           <h2 className="mb-3 text-sm font-extrabold text-lime">{t('footer.contact')}</h2>
