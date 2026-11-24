@@ -162,6 +162,23 @@
     "cancellation": {
       "title": "Cancellation policy",
       "text": "A shop’s approved cancellation policy will explain when a customer can request a cancellation and how to contact the shop about an order."
+    },
+    "publishedOn": "Published {{date}}",
+    "editor": {
+      "choose": "Policy to edit",
+      "en": "English policy text",
+      "si": "Sinhala policy text",
+      "save": "Save draft",
+      "publish": "Publish saved draft",
+      "hint": "Save both languages before publishing. Changes to a draft stay private until you publish them.",
+      "saved": "Draft saved.",
+      "published": "Policy published.",
+      "liveVersion": "Live version {{version}}",
+      "viewPublic": "View public policy",
+      "preview": "Draft preview",
+      "empty": "Enter policy text to preview it.",
+      "reload": "Load latest saved draft",
+      "reloaded": "Latest saved draft loaded."
     }
   },
   "notFound": {
@@ -284,7 +301,10 @@
     "REVIEW_UNAVAILABLE": "Reviews are available for completed order items you purchased.",
     "REVIEW_EXISTS": "You already reviewed this order item.",
     "INVALID_RECIPE": "Choose existing inventory items.",
-    "AI_UNAVAILABLE": "AI generation is unavailable."
+    "AI_UNAVAILABLE": "AI generation is unavailable.",
+    "POLICY_CHANGED": "This draft changed in another session. Load the latest saved draft and try again.",
+    "POLICY_INCOMPLETE": "Add policy text in both languages before publishing.",
+    "POLICY_ALREADY_PUBLISHED": "This draft has already been published."
   },
   "admin": {
     "title": "Admin dashboard",
@@ -366,7 +386,8 @@
     "notifications": "Enable notifications",
     "ai": "Enable AI features",
     "automation": "Automation",
-    "insights": "Insights"
+    "insights": "Insights",
+    "policies": "Policies"
   },
   "payment": {
     "billingAddress": "Billing address",
@@ -435,7 +456,8 @@
       "ai": "AI-assisted",
       "fallback": "Based on shop records",
       "verified": "Verified order data",
-      "template": "Template draft"
+      "template": "Template draft",
+      "policy": "Published shop policy"
     },
     "leaveReview": "Leave a review",
     "reviewProduct": "Product to review",

@@ -7,6 +7,7 @@ import { Category, Product, type ProductRecord } from '../catalogue/models.ts';
 import { slugSchema } from '../catalogue/schemas.ts';
 import { Order } from '../ordering/models.ts';
 import { guestKeySchema, orderReference } from '../ordering/schemas.ts';
+import { publishedPolicy, type PolicyKind } from '../policies.ts';
 import { purchasedTogether } from './pairings.ts';
 import { redact } from './provider.ts';
 import type { AiRunner } from './runner.ts';
@@ -68,6 +69,41 @@ function pickVerified(items: PublicProduct[], slugs: string[], limit: number) {
   }).slice(0, limit);
 }
 
+const policyTopics: readonly [PolicyKind, RegExp][] = [
+  ['refunds', /\b(refunds?|return policy|money back|reimburse\w*)\b|ආපසු ගෙව|මුදල් ආපසු/u],
+  ['cancellation', /\b(cancel(?:led|ed|s|ling|ing)?|cancellation)\b|අවලංගු/u],
+  ['privacy', /\b(privacy|personal data|data protection)\b|පෞද්ගලිකත්වය|පෞද්ගලික දත්ත|පුද්ගලික දත්ත/u],
+  ['terms', /\b(terms|conditions of sale)\b|නියමයන්|කොන්දේසි/u],
+];
+
+function policyExcerpt(content: string, question: string) {
+  const words = [...new Set(normalize(question).match(/[\p{L}\p{M}]{3,}/gu) ?? [])];
+  const paragraphs = content.split(/\r?\n[ \t]*\r?\n/u).map(part => part.trim()).filter(Boolean);
+  let passage = paragraphs[0] ?? content;
+  let best = 0;
+  for (const paragraph of paragraphs) {
+    const text = normalize(paragraph);
+    const score = words.filter(word => text.includes(word)).length;
+    if (score > best) {
+      best = score;
+      passage = paragraph;
+    }
+  }
+  return passage;
+}
+
+async function policyAnswer(slug: PolicyKind, language: Language, question: string) {
+  const published = await publishedPolicy(slug);
+  if (!published) return {
+    answer: language === 'si' ? 'මෙම ප්‍රතිපත්තිය තවම පළ කර නැත. විස්තර සඳහා වෙළඳසැල අමතන්න.' : 'The shop has yet to publish this policy. Contact the shop for details.',
+    source: 'fallback', products: [], link: '/contact',
+  };
+  return {
+    answer: policyExcerpt(published.content[language], question), source: 'policy', products: [],
+    link: '/' + slug, policyVersion: published.version,
+  };
+}
+
 export async function assistant(data: z.infer<typeof assistantInput>, runner: AiRunner, customerId?: Types.ObjectId) {
   const si = data.language === 'si';
   if (data.reference) {
@@ -82,9 +118,12 @@ export async function assistant(data: z.infer<typeof assistantInput>, runner: Ai
     return { answer, source: 'verified', products: [], link: order ? undefined : '/track' };
   }
 
+  const messages = normalize(data.question);
+  const topic = policyTopics.find(([, pattern]) => pattern.test(messages));
+  if (topic) return policyAnswer(topic[0], data.language, data.question);
+
   const shop = await currentShop();
   const products = await productsForAssistant();
-  const messages = normalize(data.question);
   const ranked = products.map(item => ({ item, score: searchScore(item, messages) })).sort((a, b) => b.score - a.score);
   const mentioned = ranked.filter(entry => entry.score > 0).map(entry => entry.item);
   const intent = findIntent(messages);

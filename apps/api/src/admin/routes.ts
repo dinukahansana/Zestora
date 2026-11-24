@@ -8,13 +8,14 @@ import { sessionAccess } from '../auth/routes.ts';
 import { Category, Product } from '../catalogue/models.ts';
 import { categoryInput, productInput, productValues, slugSchema } from '../catalogue/schemas.ts';
 import type { AppConfig } from '../config.ts';
-import { HttpError, parseInput } from '../http.ts';
+import { HttpError, isDuplicateKey, parseInput } from '../http.ts';
 import type { SendEmail } from '../mail.ts';
 import { deliverNotice, Notification, prepareNotice } from '../notifications.ts';
 import { Coupon, Order, orderStates, Shop, type OrderRecord, type OrderState } from '../ordering/models.ts';
 import { restoreStock } from '../ordering/inventory.ts';
 import { orderView } from '../ordering/routes.ts';
 import { codeSchema, orderReference } from '../ordering/schemas.ts';
+import { policyDraftInput, policyEditorView, policyKind, policyKinds, policyPublishInput, ShopPolicy } from '../policies.ts';
 import { validatedImage, type UploadImage } from './images.ts';
 import { AuditLog, Stock } from './models.ts';
 import { dashboard, revenueReport } from './reports.ts';
@@ -102,6 +103,44 @@ export function adminRouter(config: AppConfig, uploadImage?: UploadImage, sendEm
   });
   router.get('/audit', async (_request, response) => {
     response.json({ items: await AuditLog.find().sort({ createdAt: -1 }).limit(100).select('-__v').lean() });
+  });
+
+  router.get('/policies', async (_request, response) => {
+    const records = await ShopPolicy.find().lean();
+    const bySlug = new Map(records.map(item => [item.slug, item]));
+    response.json({ items: policyKinds.map(slug => policyEditorView(slug, bySlug.get(slug))) });
+  });
+  router.put('/policies/:slug/draft', async (request, response) => {
+    const slug = parseInput(policyKind, request.params.slug);
+    const { draft, version } = parseInput(policyDraftInput, request.body);
+    const conflict = () => new HttpError(409, 'POLICY_CHANGED', 'Reload the latest policy draft before saving.');
+    try {
+      const record = await mutation(response, 'draft_saved', 'policy', slug, async session => {
+        if (version === 0) return new ShopPolicy({ slug, draft, draftVersion: 1 }).save({ session });
+        const updated = await ShopPolicy.findOneAndUpdate({ slug, draftVersion: version }, {
+          $set: { draft }, $inc: { draftVersion: 1 },
+        }, { session, returnDocument: 'after', runValidators: true });
+        if (!updated) throw conflict();
+        return updated;
+      });
+      response.json({ item: policyEditorView(slug, record) });
+    } catch (error) {
+      if (isDuplicateKey(error)) throw conflict();
+      throw error;
+    }
+  });
+  router.post('/policies/:slug/publish', async (request, response) => {
+    const slug = parseInput(policyKind, request.params.slug);
+    const { version } = parseInput(policyPublishInput, request.body);
+    const record = await mutation(response, 'published', 'policy', slug, async session => {
+      const item = await ShopPolicy.findOne({ slug, draftVersion: version }).session(session);
+      if (!item) throw new HttpError(409, 'POLICY_CHANGED', 'Reload the latest policy draft before publishing.');
+      if (item.published?.version === version) throw new HttpError(409, 'POLICY_ALREADY_PUBLISHED', 'This draft is already published.');
+      if (!item.draft.en || !item.draft.si) throw new HttpError(400, 'POLICY_INCOMPLETE', 'Write the policy in both languages before publishing.');
+      item.published = { content: { en: item.draft.en, si: item.draft.si }, version, publishedAt: new Date() };
+      return item.save({ session });
+    });
+    response.json({ item: policyEditorView(slug, record) });
   });
 
   router.get('/catalogue', async (_request, response) => {

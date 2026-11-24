@@ -81,3 +81,38 @@ test('customer sees verified suggestions and owner can save an AI fallback repor
   await page.getByLabel('Workflow status').selectOption('failed');
   await expect(page.getByText('Scheduled reports are unconfigured.')).toBeVisible();
 });
+
+test('owner previews and publishes a bilingual policy used by the shop and assistant', async ({ page }) => {
+  const english = 'Demo refunds for unopened bottles are reviewed at the pickup counter.';
+  const sinhala = 'විවෘත නොකළ බෝතල් සඳහා මුදල් ආපසු ලබා ගැනීම කවුන්ටරයෙන් සිදු කෙරේ.';
+  await page.goto('/refunds');
+  await expect(page.getByText('Policy preview')).toBeVisible();
+  await signIn(page);
+  await page.getByRole('button', { name: 'Policies', exact: true }).click();
+  await page.getByLabel('Policy to edit').selectOption('refunds');
+  await page.getByLabel('English policy text').fill(english);
+  await page.getByLabel('Sinhala policy text').fill(sinhala);
+  const preview = page.getByRole('group').filter({ hasText: 'Draft preview' });
+  await preview.getByText('Draft preview', { exact: true }).click();
+  await expect(preview.getByText(english, { exact: true })).toBeVisible();
+  await expect(preview.getByText(sinhala, { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Publish saved draft' })).toBeDisabled();
+  await page.getByRole('button', { name: 'Save draft' }).click();
+  await expect(page.getByText('Draft saved.')).toBeVisible();
+  expect(await (await page.request.get('/api/shop/policies/refunds')).json()).toEqual({ item: null });
+  await page.getByRole('button', { name: 'Publish saved draft' }).click();
+  await expect(page.getByText('Policy published.')).toBeVisible();
+  await page.getByRole('link', { name: 'View public policy' }).click();
+  await expect(page.getByText(english, { exact: true })).toBeVisible();
+  await expect(page.getByText('Policy preview')).toHaveCount(0);
+  await page.getByRole('combobox', { name: 'Language' }).first().selectOption('si');
+  await expect(page.getByText(sinhala, { exact: true })).toBeVisible();
+  await page.getByRole('combobox').first().selectOption('en');
+
+  await page.goto('/assistant');
+  await page.getByLabel('Your question').fill('What is the refund policy for unopened bottles?');
+  await page.getByRole('button', { name: 'Ask the assistant' }).click();
+  await expect(page.getByText('Published shop policy')).toBeVisible();
+  await expect(page.getByText(english, { exact: true })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'View details' })).toHaveAttribute('href', '/refunds');
+});

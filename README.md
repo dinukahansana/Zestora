@@ -2,7 +2,7 @@
 
 **Freshness in Every Sip.**
 
-Zestora is a configurable ordering and business management platform for juice bars and other beverage shops. It has an English/Sinhala storefront with a demo catalogue. With a database connected, customers can place pickup or delivery orders, track orders, and manage accounts. Administrators manage orders, catalogue, stock, promotions, settings, and reports in `/admin`. The admin Insights tab covers reports, feedback, inventory, drafts, and AI usage. The storefront includes a bilingual menu assistant and drink finder. PayHere, email, n8n, image uploads, and a commercial AI provider are configurable.
+Zestora is a configurable ordering and business management platform for juice bars and other beverage shops. It has an English/Sinhala storefront with a demo catalogue. With a database connected, customers can place pickup or delivery orders, track orders, and manage accounts. Administrators manage orders, catalogue, stock, promotions, settings, and reports in `/admin`. The admin Insights tab covers reports, feedback, inventory, drafts, and AI usage. The storefront includes a bilingual menu assistant and drink finder. Use **Admin → Policies** to preview and publish English and Sinhala shop policies. PayHere, email, n8n, image uploads, and a commercial AI provider are configurable.
 
 ## Run locally
 

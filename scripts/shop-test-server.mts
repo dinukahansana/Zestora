@@ -12,7 +12,7 @@ import { readConfig } from '../apps/api/src/config.ts';
 import { connectDatabase, disconnectDatabase } from '../apps/api/src/database.ts';
 
 const demo = process.argv.includes('--demo');
-const port = 4176;
+const port = demo ? 4176 : Number(process.env.ZESTORA_SHOP_TEST_PORT ?? 4176);
 const host = '127.0.0.1';
 const origin = `http://${host}:${port}`;
 const mongo = await MongoMemoryReplSet.create({ replSet: { count: 1 } });

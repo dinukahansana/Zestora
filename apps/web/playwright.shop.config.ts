@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { defineConfig } from '@playwright/test';
 
 process.env.ZESTORA_TEST_ADMIN_PASSWORD ??= randomBytes(18).toString('base64url');
-const baseURL = 'http://127.0.0.1:4176';
+const baseURL = 'http://127.0.0.1:' + (process.env.ZESTORA_SHOP_TEST_PORT ?? '4176');
 
 export default defineConfig({
   testDir: './tests/shop',

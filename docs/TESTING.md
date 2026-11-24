@@ -49,3 +49,7 @@ The API suite tests current prices, tracking authorization, redaction and respon
 Run a clean `npm ci`, then type checking, the production build, the API suite, both browser suites, and `npm audit --audit-level=high`. Build with `VITE_CATALOGUE_MODE=api` before `npm run test:production`. On PowerShell, set `$env:VITE_CATALOGUE_MODE='api'` before the build. On a POSIX shell, run `VITE_CATALOGUE_MODE=api npm run build`. The production smoke uses OpenSSL, a temporary certificate and MongoDB replica set, and Chromium. Use `ZESTORA_OPENSSL_PATH` and `PLAYWRIGHT_CHROME_PATH` to override their discovery.
 
 The smoke test serves the built apps over one local HTTPS origin. It verifies the secure admin cookie, blocked cross-origin mutations, the PayHere form policy, immutable caching for fingerprinted files, JSON API 404s, refreshed React routes, and 390 px mobile layouts. It also verifies the simulator is unavailable in production. GitHub Actions runs these checks on pushes to main and pull requests using the Chrome supplied by the Ubuntu runner.
+
+## Policy publication
+
+The API suite checks administrator authorization, draft privacy, required translations, simultaneous saves, and consistent published data in the public route and assistant. The shop browser suite previews and publishes a bilingual refund policy and reads it through both customer routes. When a demo is already running on port 4176, set `ZESTORA_SHOP_TEST_PORT` to a free local port for `npm run test:shop`.

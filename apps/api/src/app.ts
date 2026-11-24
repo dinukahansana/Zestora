@@ -18,6 +18,7 @@ import { errorHandler, HttpError, notFound } from './http.ts';
 import { createMailer, type SendEmail } from './mail.ts';
 import { orderingRouter } from './ordering/routes.ts';
 import { paymentsRouter } from './payments/routes.ts';
+import { storefrontPoliciesRouter } from './policies.ts';
 import { mountStorefront } from './storefront.ts';
 
 export function createApp(
@@ -75,6 +76,7 @@ export function createApp(
   api.use('/admin/ai', requireDatabase, ai.admin);
   api.use('/admin', requireDatabase, adminRouter(config, uploadImage, sendEmail));
   api.use('/shop/storefront', requireDatabase);
+  api.use('/shop/policies', requireDatabase, storefrontPoliciesRouter);
   api.use(storefrontSettingsRouter);
   api.use(['/catalogue', '/products', '/categories', '/ai', '/reviews'], requireDatabase);
   api.use(ai.router);

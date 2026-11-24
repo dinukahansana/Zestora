@@ -48,3 +48,7 @@ Order fulfilment and payment state stay distinct. A cash payment records `paidAt
 A product can reference stock slugs and quantities in its recipe. `StockMovement` links a unique order reference to reserved ingredient quantities and records release on cancellation. The public catalogue uses inventory to compute availability.
 
 `Review` is unique by customer, order, and product. `ReviewAnalysis` is unique by review ID and stores sentiment, topics, and source. `BusinessReport` stores computed metrics, narrative, language, source, and an optional unique schedule key. `MarketingDraft` stores content, status, and approval time. `AiRun` expires temporary request claims. `AiUsage` stores per-feature outcome, duration, and reported token counts with time-limited retention.
+
+## Shop policy publication
+
+`ShopPolicy` is unique by slug. It stores bilingual draft plain text and its version, together with a public snapshot containing the content, version, and time of publication. Version-checked writes protect a newer edit from older browser sessions. Draft saves and publishes create admin audit entries.

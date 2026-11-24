@@ -739,3 +739,70 @@ describe('advanced automation', () => {
     expect(based.text).not.toContain('passion-cooler');
   });
 });
+
+describe('shop policy publication', () => {
+  test('only administrators can save and publish, and customers share the published bilingual version with the assistant', async () => {
+    await request(app).get('/api/admin/policies').expect(401);
+    const customer = request.agent(app);
+    await customer.post('/api/auth/login').send({ email: buyer.email, password }).expect(200);
+    await customer.put('/api/admin/policies/refunds/draft').send({ draft: { en: 'Private', si: '' }, version: 0 }).expect(403);
+    await request(app).get('/api/shop/policies/unknown').expect(400);
+
+    const owner = request.agent(app);
+    await owner.post('/api/auth/login').send({ email: demoEmail, password }).expect(200);
+    const rows = await owner.get('/api/admin/policies').expect(200);
+    expect(rows.body.items.map((row: { slug: string }) => row.slug)).toEqual(['privacy', 'terms', 'refunds', 'cancellation']);
+    const path = '/api/admin/policies/refunds';
+    const publicPath = '/api/shop/policies/refunds';
+    const policyParagraph = 'Refunds for unopened bottles are handled at the pickup counter.';
+    const draft = {
+      en: 'This demo page explains sample transactions.\n\n' + policyParagraph,
+      si: 'විවෘත නොකළ බෝතල් සඳහා ආපසු ගෙවීම් කවුන්ටරයෙන් සිදු කෙරේ.',
+    };
+
+    await owner.put(path + '/draft').send({ draft: { en: draft.en, si: '' }, version: 0 }).expect(200);
+    await owner.post(path + '/publish').send({ version: 1 }).expect(400);
+    const before = await request(app).get(publicPath).expect(200);
+    expect(before.body).toEqual({ item: null });
+    const undisclosed = await request(app).post('/api/ai/assistant').send({ question: 'What is the refund policy?' }).expect(200);
+    expect(undisclosed.body).toMatchObject({ source: 'fallback', link: '/contact' });
+    expect(undisclosed.text).not.toContain(policyParagraph);
+
+    const saved = await owner.put(path + '/draft').send({ draft, version: 1 }).expect(200);
+    expect(saved.body.item).toMatchObject({ draft, draftVersion: 2, published: null });
+    await owner.post(path + '/publish').send({ version: 1 }).expect(409);
+    await owner.post(path + '/publish').send({ version: 2 }).expect(200);
+    await owner.post(path + '/publish').send({ version: 2 }).expect(409);
+    const publicPolicy = await request(app).get(publicPath).expect(200);
+    expect(publicPolicy.body.item).toEqual({ content: draft, version: 2, publishedAt: expect.any(String) });
+    expect(publicPolicy.headers['cache-control']).toBe('no-store');
+
+    await owner.put(path + '/draft').send({ draft: { en: 'New unpublished draft', si: draft.si }, version: 2 }).expect(200);
+    expect((await request(app).get(publicPath).expect(200)).body).toEqual(publicPolicy.body);
+    const answer = await request(app).post('/api/ai/assistant').send({ question: 'Can I get a refund for unopened bottles?' }).expect(200);
+    expect(answer.body).toMatchObject({ source: 'policy', answer: policyParagraph, link: '/refunds', policyVersion: 2 });
+    const sinhala = await request(app).post('/api/ai/assistant').send({ question: 'මුදල් ආපසු ලබා ගන්නේ කෙසේද?', language: 'si' }).expect(200);
+    expect(sinhala.body).toMatchObject({ source: 'policy', answer: draft.si, link: '/refunds', policyVersion: 2 });
+
+    const audit = await owner.get('/api/admin/audit').expect(200);
+    const policyEvents = audit.body.items.filter((item: { entity: string; reference: string }) => item.entity === 'policy' && item.reference === 'refunds');
+    expect(policyEvents.map((item: { action: string }) => item.action).sort()).toEqual(['draft_saved', 'draft_saved', 'draft_saved', 'published']);
+  });
+
+  test('simultaneous draft saves protect the current version', async () => {
+    const owner = request.agent(app);
+    await owner.post('/api/auth/login').send({ email: demoEmail, password }).expect(200);
+    const path = '/api/admin/policies/terms/draft';
+    const update = (en: string, version: number) => owner.put(path).send({ draft: { en, si: 'කෙටුම්පත' }, version });
+    const results = await Promise.all([update('First admin edit', 0), update('Other admin edit', 0)]);
+    expect(results.map(result => result.status).sort()).toEqual([200, 409]);
+    const winning = results.find(result => result.status === 200)?.body.item;
+    expect(winning.draftVersion).toBe(1);
+    expect(results.find(result => result.status === 409)?.body.error.code).toBe('POLICY_CHANGED');
+
+    const next = await Promise.all([update('Edit with current version', 1), update('Another current edit', 1)]);
+    expect(next.map(result => result.status).sort()).toEqual([200, 409]);
+    expect(next.find(result => result.status === 200)?.body.item.draftVersion).toBe(2);
+    await request(app).get('/api/shop/policies/terms').expect(200, { item: null });
+  });
+});

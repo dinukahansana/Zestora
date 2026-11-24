@@ -1,9 +1,11 @@
+import { useQuery } from '@tanstack/react-query';
 import { ChevronDown, X, ZoomIn } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
-import { orderingEnabled } from '../commerce/api';
+import { api, orderingEnabled, RequestError } from '../commerce/api';
 import { PageHeading } from '../components/Storefront';
+import type { PolicyKind, PolicyPublication } from '../content/policies';
 import { CatalogueMessage, useCatalogue } from '../content/useCatalogue';
 import { languageOf } from '../i18n';
 
@@ -89,14 +91,33 @@ export function FaqPage() {
   );
 }
 
-export function PolicyPage({ policy }: { policy: 'privacy' | 'terms' | 'refunds' | 'cancellation' }) {
-  const { t } = useTranslation();
+export function PolicyPage({ policy }: { policy: PolicyKind }) {
+  const { t, i18n } = useTranslation();
+  const language = languageOf(i18n.resolvedLanguage);
+  const query = useQuery({
+    queryKey: ['shop-policy', policy], enabled: orderingEnabled,
+    queryFn: () => api<{ item: PolicyPublication | null }>('/shop/policies/' + policy),
+  });
+  const item = query.data?.item;
+  const preview = !orderingEnabled || query.data?.item === null;
+  const publishedDate = item && new Intl.DateTimeFormat(language, {
+    dateStyle: 'long', timeZone: 'Asia/Colombo',
+  }).format(new Date(item.publishedAt));
+
   return (
     <>
-      <PageHeading title={t(`policy.${policy}.title`)}><p className="font-bold">{t('policy.demo')}</p></PageHeading>
+      <PageHeading title={t('policy.' + policy + '.title')}>
+        {publishedDate && <p>{t('policy.publishedOn', { date: publishedDate })}</p>}
+        {preview && <p className="font-bold">{t('policy.demo')}</p>}
+      </PageHeading>
       <div className="container-wide section-space">
-        <p className="max-w-2xl leading-relaxed">{t(`policy.${policy}.text`)}</p>
-        <p className="mt-4 max-w-2xl rounded-xl bg-moss px-4 py-3 leading-relaxed text-muted">{t('policy.notice')}</p>
+        {orderingEnabled && query.isPending && <p role="status">{t('common.loading')}</p>}
+        <RequestError error={query.error} />
+        {item && <p className="max-w-2xl whitespace-pre-wrap break-words leading-relaxed" lang={language}>{item.content[language]}</p>}
+        {preview && <>
+          <p className="max-w-2xl leading-relaxed">{t('policy.' + policy + '.text')}</p>
+          <p className="mt-4 max-w-2xl rounded-xl bg-moss px-4 py-3 leading-relaxed text-muted">{t('policy.notice')}</p>
+        </>}
       </div>
     </>
   );

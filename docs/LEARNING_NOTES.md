@@ -95,3 +95,9 @@ Serving React and Express under one HTTPS origin simplifies how the browser send
 A fingerprinted asset filename changes with its content, so browsers can cache that URL for a year while rechecking the storefront HTML. Loading the home animation as a separate chunk reduced the main gzip bundle from about 123 KB to 105 KB. The browser can display the headline while the animation code loads.
 
 CI installs from the lockfile and reruns release tests against a temporary database. Deploying that same commit to a host adds the real database, domain, and provider configuration. A local HTTPS test can verify cookies and routes. Only the gateway's actual sandbox can verify that PayHere reaches a public callback.
+
+## Shop policy publishing
+
+A policy document holds a private draft and a separate published copy. Saving advances the draft version, so a second tab with an older version cannot overwrite the new edit. Publishing copies both languages and the version into the public snapshot. MongoDB saves the edit or publication with its admin audit entry in one transaction.
+
+The refund page and assistant use the same public snapshot. For a question about a specific policy, the assistant selects a relevant paragraph and links to the full policy. The answer uses the shop's saved words and works with the external model switched off. A policy waiting for publication still has a clearly labeled preview page.

@@ -106,3 +106,9 @@ The starter page and health endpoint are the two implemented features. MongoDB A
 | Integrations | Eleven n8n workflows verified locally, including a native recurring trigger and duplicate feedback delivery handling. Payment verification and simulator tests passed using local fixtures. |
 | Production | One-origin production hosting, a validated Render Blueprint, GitHub Actions, and a deployment runbook are ready. |
 | External verification | Public hosting and Atlas connection are pending. Real PayHere Sandbox callbacks, SMTP, Cloudinary, hosted n8n, and the chosen model provider require their deployment settings. |
+
+## Follow-up milestone · Shop policies
+
+Administrators can draft, preview, and publish Privacy, Terms, Refunds, and Cancellation pages in English and Sinhala. The storefront and assistant read the published snapshot. A newer draft stays private, and simultaneous saves cannot silently overwrite it. The shop must supply its approved wording.
+
+Verification covered authorization, stale and concurrent edits, both languages, an unpublished preview, and a refund answer linked to the published version. The full local suite passed, including 31 API cases, 13 browser cases, both builds, and the production HTTPS smoke test.

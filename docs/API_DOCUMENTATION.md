@@ -106,3 +106,14 @@ The administrator-only `/api/admin/ai` routes provide report history and generat
 `POST /api/integrations/n8n/scheduled-reports` accepts the configured schedule credential header and returns the keys of newly saved closed periods. `GET /api/admin/automation?state=failed` filters the queue and includes related email status where available, with no recipient or message content. Checkout accepts an optional `feedbackEmail` boolean that defaults to false.
 
 Recommendations accept an optional published product slug in `basedOn`. The ingredient usage view additionally shows the number of real orders and distinct dates behind each estimate. A null `nextWeekUnits` indicates an insufficient sample. Usage returns the last 30 days of successes, duration, and token totals per AI feature.
+
+## Shop policies
+
+| Endpoint | Request and response |
+| --- | --- |
+| `GET /api/shop/policies/:slug` | Returns `{ item }` with the published `content` in English and Sinhala, its `version`, and `publishedAt`. An unpublished policy returns `{ item: null }`. |
+| `GET /api/admin/policies` | Returns the four policy records for the editor, including private draft text, draft version, and public snapshot. Requires an admin session. |
+| `PUT /api/admin/policies/:slug/draft` | Accepts `{ draft: { en, si }, version }`. Use version zero for the first save. Requires an admin session. A stale version returns 409. |
+| `POST /api/admin/policies/:slug/publish` | Accepts `{ version }`. Publishes the current saved draft when both languages have text. Requires an admin session. A stale or already published version returns 409. |
+
+Policy slugs are `privacy`, `terms`, `refunds`, and `cancellation`. Drafts accept up to 6,000 characters per language and can be saved while translation is incomplete. The assistant returns a policy excerpt, public link, and `policyVersion` for recognized policy questions with a published answer.
