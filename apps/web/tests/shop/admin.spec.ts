@@ -71,8 +71,13 @@ test('customer sees verified suggestions and owner can save an AI fallback repor
   await page.getByRole('button', { name: 'Insights' }).click();
   await page.getByRole('button', { name: 'Generate report' }).click();
   await expect(page.getByLabel('Saved report')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'AI usage over the last 30 days' })).toBeVisible();
+  await expect(page.getByText('Model provider is unconfigured.')).toBeVisible();
   await page.getByRole('button', { name: 'Generate draft' }).click();
   await expect(page.getByText('Draft · Template draft')).toBeVisible();
   await page.getByRole('button', { name: 'Approve draft' }).click();
   await expect(page.getByText('Approved · Template draft')).toBeVisible();
+  await page.getByRole('button', { name: 'Automation' }).click();
+  await page.getByLabel('Workflow status').selectOption('failed');
+  await expect(page.getByText('Scheduled reports are unconfigured.')).toBeVisible();
 });

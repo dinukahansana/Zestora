@@ -64,9 +64,9 @@ export function orderingRouter(config: AppConfig, sendEmail?: SendEmail) {
     if (online && (!mode || !input.billing)) {
       throw new HttpError(400, 'PAYMENT_UNAVAILABLE', 'Choose cash or provide the information required for PayHere.');
     }
-    const { guestKey, ...orderInput } = input;
+    const { guestKey, feedbackEmail, ...orderInput } = input;
     const guestHash = !user && guestKey ? hash(guestKey) : undefined;
-    const fingerprint = hash(JSON.stringify([user?._id.toString(), guestHash, orderInput]));
+    const fingerprint = hash(JSON.stringify([user?._id.toString(), guestHash, { ...orderInput, ...(feedbackEmail && { feedbackEmail }) }]));
     async function existingOrder() {
       const existing = await Order.findOne({ checkoutKey: input.checkoutKey }).lean();
       if (existing && existing.fingerprint !== fingerprint) {
@@ -109,6 +109,7 @@ export function orderingRouter(config: AppConfig, sendEmail?: SendEmail) {
           paymentEnvironment: online ? mode : undefined,
           billing: online ? input.billing : undefined,
           language: input.language,
+          feedbackEmail,
         });
         await consumeStock(reference, priced.usage, session);
         await order.save({ session });

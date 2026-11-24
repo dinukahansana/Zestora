@@ -85,6 +85,17 @@ The starter page and health endpoint are the two implemented features. MongoDB A
 | n8n | Nine published workflows exercised in local n8n 2.48.8. Four synchronous AI tasks and two new event workflows included a controlled local model endpoint and captured mail transport. |
 | Checks | Type checking, both builds, API integration tests, browser storefront and shop checks, and n8n integration. A commercial model account can be configured independently. |
 
+## Phase 8
+
+| Area | Status |
+| --- | --- |
+| Reports | An hourly n8n trigger saves one snapshot for each latest closed day, Monday-based week, and month in Colombo time. |
+| Communications | Checkout offers a one-time feedback invitation per order. A signed event starts the job after completion, with one send attempt recorded separately from workflow delivery. |
+| Recommendations | Current catalogue, availability, and exclusions remain authoritative. Eligible completed paid baskets add product pairing evidence. |
+| Demand | Ingredient estimates use recorded paid usage and require 15 orders across seven distinct days. Low-sample ingredients show an explicit empty state. |
+| Monitoring | Filter workflows by status, see next retries and mail results, and check model outcomes, average duration, and tokens by feature. |
+| Checks | 29 API cases, browser suites, type checking, both builds, and eleven workflows in n8n 2.48.8. A five-second test schedule verified repeated native triggers and the opted-in email workflow used a captured mail transport. |
+
 ## Next milestone
 
-Phase 8 adds scheduled reports, customer communication, stronger recommendations, demand insights, and workflow and AI usage monitoring.
+Phase 9 covers final validation and deployment.

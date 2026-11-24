@@ -77,3 +77,13 @@ The assistant uses the model to decide what the question is asking. Express then
 A verified review and its derived sentiment are separate records. Owners can revisit what the customer actually wrote. Reports use the same separation for sales data and generated narrative. Marketing drafts have a distinct approval state so the owner controls what gets shared.
 
 A recipe maps a drink to inventory quantities. The order and the stock reservation commit together, and cancelling restores that reservation once. Crossing a configured threshold records a low-stock event for n8n.
+
+## Phase 8
+
+A Schedule Trigger calls the API once an hour. The API calculates the latest closed day, week, and month in Colombo time. A unique period key and a short-lived claim let concurrent ticks share the same work. Whenever the service restarts, the next successful tick fills the latest periods.
+
+A one-time feedback invitation is an opt-in on each order. Completing a consenting order saves an email job and an event in the same transaction. The job key keeps n8n retries from sending it twice. The Automation tab shows whether Express acknowledged the workflow and whether the email actually sent.
+
+Pairing recommendations use counts from completed paid baskets. Each basket counts once per item. The API checks the current published menu and ingredient exclusions before returning any suggestion. Demand uses 30 days of recorded ingredient usage on eligible sales. It estimates the next seven days only after 15 orders across seven distinct days. The estimate is a simple rate and does not model seasonality.
+
+The Insights tab shows model attempts, successful responses, average duration, and token counts by feature. This helps an owner spot a slow or unreliable model while keeping prompts out of usage logs.

@@ -9,9 +9,11 @@ import request from 'supertest';
 import sharp from 'sharp';
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest';
 import { createApp } from '../src/app.ts';
-import { Stock } from '../src/admin/models.ts';
-import { AiUsage, Review, ReviewAnalysis } from '../src/ai/models.ts';
+import { Stock, StockMovement } from '../src/admin/models.ts';
+import { demandByIngredient } from '../src/ai/demand.ts';
+import { AiUsage, BusinessReport, Review, ReviewAnalysis } from '../src/ai/models.ts';
 import { deliverOne } from '../src/automation/delivery.ts';
+import { closedReportWindows } from '../src/automation/reportSchedule.ts';
 import { eventSignature, Outbox } from '../src/automation/events.ts';
 import { Session, User } from '../src/auth/models.ts';
 import { Category, Product } from '../src/catalogue/models.ts';
@@ -655,5 +657,85 @@ describe('AI services and ingredient stock', () => {
     await owner.patch('/api/admin/orders/' + ref + '/status').send({ status: 'cancelled' }).expect(200);
     await owner.patch('/api/admin/orders/' + ref + '/status').send({ status: 'cancelled' }).expect(409);
     expect((await Stock.findOne({ slug: 'lime-recipe' }))?.onHand).toBe(3);
+  });
+});
+
+describe('advanced automation', () => {
+  test('scheduled reports authenticate, use Colombo calendar boundaries, and deduplicate concurrent ticks', async () => {
+    const windows = closedReportWindows(new Date('2026-11-30T19:00:00.000Z'));
+    expect(windows.map(value => value.key)).toEqual(['day:2026-11-30', 'week:2026-11-23', 'month:2026-11-01']);
+    expect(windows[2].end.toISOString()).toBe('2026-11-30T18:30:00.000Z');
+    const key = randomBytes(35).toString('base64url');
+    const scheduled = createApp(readConfig({ NODE_ENV: 'test', N8N_SCHEDULE_KEY: key }));
+    const endpoint = '/api/integrations/n8n/scheduled-reports';
+    await request(app).post(endpoint).expect(404);
+    await request(scheduled).post(endpoint).set('x-zestora-schedule-key', 'incorrect').expect(403);
+    const calls = [1, 2].map(() => request(scheduled).post(endpoint).set('x-zestora-schedule-key', key).expect(200));
+    const responses = await Promise.all(calls);
+    expect(responses.flatMap(item => item.body.saved)).toHaveLength(3);
+    const stored = await BusinessReport.find({ scheduleKey: { $exists: true } }).lean();
+    expect(stored).toHaveLength(3);
+    expect(stored.every(item => item.metrics.window.start < item.metrics.window.end)).toBe(true);
+    const repeated = await request(scheduled).post(endpoint).set('x-zestora-schedule-key', key).expect(200);
+    expect(repeated.body.saved).toEqual([]);
+  });
+
+  test('customer feedback is opt-in, with a separate status and no private data in the event', async () => {
+    const messages: Email[] = [];
+    const mailApp = createApp(config, async message => { messages.push(message); });
+    const administrator = request.agent(mailApp);
+    await administrator.post('/api/auth/login').send({ email: demoEmail, password }).expect(200);
+    const complete = async (feedbackEmail: boolean) => {
+      const created = await request(mailApp).post('/api/orders').send({
+        items: [mango], fulfillment: pickup, customer: buyer, expectedTotal: 1940, checkoutKey: randomUUID(),
+        guestKey: guestKey(), feedbackEmail,
+      }).expect(201);
+      for (const status of ['confirmed', 'preparing', 'ready_for_pickup', 'completed']) {
+        await administrator.patch('/api/admin/orders/' + created.body.order.reference + '/status').send({ status }).expect(200);
+      }
+      return created.body.order.reference;
+    };
+    const included = await complete(true);
+    const excluded = await complete(false);
+    await vi.waitFor(async () => expect((await Notification.findOne({ key: included + ':feedback' }))?.status).toBe('sent'));
+    expect(await Notification.exists({ key: excluded + ':feedback' })).toBeNull();
+    const feedback = await Outbox.findOne({ 'event.resourceId': included, 'event.eventType': 'order.feedback_requested' });
+    expect(feedback?.event.payload).toEqual({});
+    expect(messages.filter(message => message.subject === 'How was your order?')).toHaveLength(1);
+    const response = await administrator.get('/api/admin/automation?state=queued').expect(200);
+    const item = response.body.items.find((row: { event: { eventId: string } }) => row.event.eventId === feedback?.event.eventId);
+    expect(item).toMatchObject({ noticeStatus: 'sent', state: 'queued' });
+    expect(item).not.toHaveProperty('noticeKey');
+    expect(response.text).not.toContain(buyer.email);
+  });
+
+  test('verified basket history informs pairings and only sufficient real sales feed demand', async () => {
+    const product = await Order.findOne().select('customer fulfillment items totals').lean();
+    if (!product) throw new Error('Order fixture missing.');
+    const fixtureItem = product.items[0];
+    const now = Date.now();
+    const samples = Array.from({ length: 16 }, (_, index) => {
+      const createdAt = new Date(now - (index + 1) * 86400000);
+      const reference = 'Z-' + randomBytes(10).toString('hex').toUpperCase();
+      const items = ['golden-mango', 'island-fruit-bowl', 'berry-bliss', 'passion-cooler'].map(productSlug => ({ ...fixtureItem, productSlug }));
+      return {
+        reference, createdAt, paidAt: createdAt, checkoutKey: randomUUID(), fingerprint: randomUUID(),
+        customer: product.customer, fulfillment: product.fulfillment, totals: product.totals, items,
+        orderStatus: 'completed', paymentStatus: 'paid', paymentMethod: 'cash_pickup',
+        ...(index === 15 && { paymentEnvironment: 'sandbox' }),
+      };
+    });
+    await Order.insertMany(samples);
+    await StockMovement.insertMany(samples.map((item, index) => ({
+      orderReference: item.reference, createdAt: item.createdAt,
+      usage: [{ stockSlug: 'sample-demand', units: index === 15 ? 10000 : 2 }],
+    })));
+    const demand = await demandByIngredient();
+    expect(demand.get('sample-demand')).toEqual({ orders: 15, days: 15, nextWeekUnits: 7 });
+    const based = await request(app).post('/api/ai/recommendations').send({ preference: 'fruitzzz', basedOn: 'golden-mango', exclude: ['yoghurt'] }).expect(200);
+    expect(based.body.products[0]).toMatchObject({ slug: 'island-fruit-bowl', reason: 'Ordered alongside the selected or recently purchased items.' });
+    expect(based.text).not.toContain('berry-bliss');
+    expect(based.text).not.toContain('golden-mango');
+    expect(based.text).not.toContain('passion-cooler');
   });
 });

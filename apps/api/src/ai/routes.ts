@@ -13,6 +13,7 @@ import { Order } from '../ordering/models.ts';
 import { orderReference } from '../ordering/schemas.ts';
 import { analyzeReview, createDraft, createReport, draftInput, feedbackSummary, reportInput, reviewInput } from './business.ts';
 import { assistant, assistantInput, recommendations, recommendationInput } from './catalogue.ts';
+import { demandByIngredient } from './demand.ts';
 import { AiUsage, BusinessReport, MarketingDraft, Review } from './models.ts';
 import type { AiProvider } from './provider.ts';
 import type { AiRunner } from './runner.ts';
@@ -90,22 +91,23 @@ export function aiRoutes(config: AppConfig, runner: AiRunner, provider: AiProvid
   });
   admin.get('/inventory', async (_request, response) => {
     const since = new Date(Date.now() - 30 * 86400000);
-    const [items, usage] = await Promise.all([
+    const [items, usage, demand] = await Promise.all([
       Stock.find().select('slug name unit onHand threshold').sort({ slug: 1 }).lean(),
       StockMovement.aggregate<{ _id: string; used: number }>([
         { $match: { releasedAt: { $exists: false }, createdAt: { $gte: since } } },
         { $unwind: '$usage' }, { $group: { _id: '$usage.stockSlug', used: { $sum: '$usage.units' } } },
       ]),
+      demandByIngredient(),
     ]);
     const counts = new Map(usage.map(item => [item._id, item.used]));
-    response.json({ items: items.map(item => ({ ...item, used: counts.get(item.slug) ?? 0 })) });
+    response.json({ items: items.map(item => ({ ...item, used: counts.get(item.slug) ?? 0, demand: demand.get(item.slug) ?? { orders: 0, days: 0, nextWeekUnits: null } })) });
   });
   admin.get('/usage', async (_request, response) => {
     const since = new Date(Date.now() - 30 * 86400000);
     const items = await AiUsage.aggregate([
       { $match: { createdAt: { $gte: since } } },
       { $group: {
-        _id: '$feature', requests: { $sum: 1 }, success: { $sum: { $cond: ['$ok', 1, 0] } },
+        _id: '$feature', durationMs: { $avg: '$durationMs' }, requests: { $sum: 1 }, success: { $sum: { $cond: ['$ok', 1, 0] } },
         inputTokens: { $sum: '$inputTokens' }, outputTokens: { $sum: '$outputTokens' },
       } }, { $sort: { _id: 1 } },
     ]);

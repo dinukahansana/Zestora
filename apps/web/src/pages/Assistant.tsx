@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router';
+import { Link, useSearchParams } from 'react-router';
 import { RequestError, send } from '../commerce/api';
 import { PageHeading } from '../components/Storefront';
 import { formatPrice } from '../content/catalogue';
@@ -19,6 +19,9 @@ interface Result { answer?: string; source: string; products: Card[]; link?: str
 export function AssistantPage({ recommend = false }: { recommend?: boolean }) {
   const { t, i18n } = useTranslation();
   const language = languageOf(i18n.resolvedLanguage);
+  const [params] = useSearchParams();
+  const product = params.get('product');
+  const basedOn = product && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(product) && product.length <= 80 ? product : undefined;
   const [answer, setAnswer] = useState<Result>();
   const [shownQuestion, setShownQuestion] = useState('');
   const [busy, setBusy] = useState(false);
@@ -33,7 +36,7 @@ export function AssistantPage({ recommend = false }: { recommend?: boolean }) {
     setError(undefined);
     try {
       setAnswer(await send<Result>(recommend ? '/ai/recommendations' : '/ai/assistant', recommend
-        ? { preference: question, language, exclude: read('exclude').split(',').map(word => word.trim()).filter(word => word.length >= 2).slice(0, 8) }
+        ? { preference: question, language, basedOn, exclude: read('exclude').split(',').map(word => word.trim()).filter(word => word.length >= 2).slice(0, 8) }
         : { question, language, reference: read('reference') || undefined, guestKey: read('guestKey') || undefined }));
       setShownQuestion(question);
     } catch (error) { setError(error); }

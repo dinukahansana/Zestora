@@ -100,3 +100,9 @@ Signed-in customers can pay and read their orders from their own account. Guest 
 `POST /api/ai/assistant` accepts a question and language, with optional order reference and guest key. `POST /api/ai/recommendations` accepts a flavour preference, language, and an exclusion list. Both return verified catalogue cards and an answer source. `POST /api/reviews` accepts a rating and text for an item from the signed-in customer's completed order.
 
 The administrator-only `/api/admin/ai` routes provide report history and generation, feedback aggregates, marketing drafts and approval, ingredient usage, and aggregate model usage. The data includes a source label for the model response or fallback. `POST /api/integrations/n8n/ai` requires a fresh signed AI task created by the API. The regular signed n8n consumer handles review and low-stock events.
+
+## Advanced automation
+
+`POST /api/integrations/n8n/scheduled-reports` accepts the configured schedule credential header and returns the keys of newly saved closed periods. `GET /api/admin/automation?state=failed` filters the queue and includes related email status where available, with no recipient or message content. Checkout accepts an optional `feedbackEmail` boolean that defaults to false.
+
+Recommendations accept an optional published product slug in `basedOn`. The ingredient usage view additionally shows the number of real orders and distinct dates behind each estimate. A null `nextWeekUnits` indicates an insufficient sample. Usage returns the last 30 days of successes, duration, and token totals per AI feature.

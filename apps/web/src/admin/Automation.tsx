@@ -10,6 +10,7 @@ interface EventRow {
   attempts: number;
   nextAttempt: string;
   lastError?: string;
+  noticeStatus?: 'queued' | 'sending' | 'sent' | 'failed' | 'suppressed';
 }
 
 export function AutomationAdmin() {
@@ -17,8 +18,9 @@ export function AutomationAdmin() {
   const cache = useQueryClient();
   const [pending, setPending] = useState('');
   const [error, setError] = useState<unknown>();
+  const [state, setState] = useState('');
   const key = ['admin', 'automation'];
-  const query = useQuery({ queryKey: key, queryFn: () => api<{ enabled: boolean; items: EventRow[] }>('/admin/automation'), refetchInterval: 12000 });
+  const query = useQuery({ queryKey: [...key, state], queryFn: () => api<{ enabled: boolean; scheduleEnabled: boolean; items: EventRow[] }>('/admin/automation' + (state ? '?state=' + state : '')), refetchInterval: 12000 });
 
   async function retry(id: string) {
     setPending(id);
@@ -33,13 +35,22 @@ export function AutomationAdmin() {
   return <Panel title={t('admin.automation')}>
     {query.isPending && <p role="status">{t('common.loading')}</p>}
     {query.data && <p className="mb-4 text-sm text-muted">{t(query.data.enabled ? 'automation.enabled' : 'automation.disabled')}</p>}
+    {query.data && <p className="mb-4 text-sm text-muted">{t(query.data.scheduleEnabled ? 'automation.scheduleEnabled' : 'automation.scheduleDisabled')}</p>}
+    <label className="mb-4 grid max-w-xs gap-1 text-sm font-bold">{t('automation.filter')}
+      <select className="field" value={state} onChange={event => setState(event.target.value)}>
+        <option value="">{t('automation.allStates')}</option>
+        {['queued', 'sending', 'retry', 'failed', 'delivered'].map(value => <option value={value} key={value}>{t(`automation.state.${value}`)}</option>)}
+      </select>
+    </label>
     <RequestError error={error ?? query.error} />
     <ul className="grid gap-2">
-      {query.data?.items.map(({ event, state, attempts, lastError }) => (
+      {query.data?.items.map(({ event, state, attempts, lastError, nextAttempt, noticeStatus }) => (
         <li key={event.eventId} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-line p-3 text-sm">
           <div className="min-w-0">
             <strong>{t(`automation.event.${event.eventType.replace('.', '_')}`, { defaultValue: event.eventType })}</strong>
             <span className="block break-all text-muted">{event.resourceId} · {new Date(event.occurredAt).toLocaleString()}</span>
+            {noticeStatus && <span className="block text-xs text-muted">{t('automation.mail', { state: t(`automation.notice.${noticeStatus}`) })}</span>}
+            {state === 'retry' && <span className="block text-xs text-muted">{t('automation.nextAttempt', { time: new Date(nextAttempt).toLocaleString() })}</span>}
             {lastError && <span className="block text-xs text-muted">{lastError}</span>}
           </div>
           <div className="flex flex-wrap items-center gap-2">

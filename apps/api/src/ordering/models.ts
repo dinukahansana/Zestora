@@ -131,6 +131,7 @@ export interface OrderRecord {
   paymentEnvironment?: PaymentEnvironment;
   billing?: CheckoutInput['billing'];
   language?: 'en' | 'si';
+  feedbackEmail?: boolean;
   paidAt?: Date;
   createdAt?: Date;
   updatedAt?: Date;
@@ -157,6 +158,7 @@ const orderSchema = new Schema<OrderRecord>({
   paidAt: Date,
   paymentEnvironment: { type: String, enum: ['sandbox', 'live', 'simulator'] },
   billing: new Schema({ address: String, city: String }, { _id: false }),
+  feedbackEmail: { type: Boolean, default: false },
   language: { type: String, enum: ['en', 'si'], default: 'en' },
 }, { timestamps: true });
 

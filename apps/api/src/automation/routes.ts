@@ -7,6 +7,7 @@ import { HttpError, parseInput } from '../http.ts';
 import type { SendEmail } from '../mail.ts';
 import { deliverNotice, deliverStockNotice } from '../notifications.ts';
 import { envelopeSchema, eventJson, Outbox, verifiedSignature } from './events.ts';
+import { authorizedSchedule, saveScheduledReports } from './reportSchedule.ts';
 
 export function automationRouter(config: AppConfig, sendEmail: SendEmail | undefined, provider: AiProvider) {
   const router = Router();
@@ -27,6 +28,14 @@ export function automationRouter(config: AppConfig, sendEmail: SendEmail | undef
       await Outbox.updateOne({ _id: item._id, processedAt: { $exists: false } }, { $set: { processedAt: new Date() } });
     }
     response.set('Cache-Control', 'no-store').json({ accepted: true, eventId: event.eventId, duplicate: !!item.processedAt });
+  });
+
+  router.post('/scheduled-reports', rateLimit({ windowMs: 60000, limit: 20 }), async (request, response) => {
+    if (!config.n8nScheduleKey) throw new HttpError(404, 'NOT_FOUND', 'This integration is unavailable.');
+    if (!authorizedSchedule(request.get('x-zestora-schedule-key') ?? '', config.n8nScheduleKey)) {
+      throw new HttpError(403, 'INVALID_SCHEDULE_KEY', 'This schedule could not be verified.');
+    }
+    response.set('Cache-Control', 'no-store').json(await saveScheduledReports(provider));
   });
 
   return router;

@@ -7,10 +7,10 @@ const timezone = 'Asia/Colombo';
 const dayMs = 24 * 60 * 60 * 1000;
 const recentStates = ['pending', 'confirmed', 'preparing', 'ready_for_pickup', 'out_for_delivery'];
 
-export async function revenueReport(period: 'day' | 'week' | 'month') {
-  const start = new Date(Date.now() - dayMs * (period === 'day' ? 31 : 366));
+export async function revenueReport(period: 'day' | 'week' | 'month', window?: { start: Date; end: Date }) {
+  const start = window?.start ?? new Date(Date.now() - dayMs * (period === 'day' ? 31 : 366));
   return Order.aggregate<{ period: string; revenue: number; paidOrders: number }>([
-    { $match: { paymentStatus: 'paid', orderStatus: { $ne: 'cancelled' }, paymentEnvironment: { $nin: ['simulator', 'sandbox'] }, paidAt: { $gte: start } } },
+    { $match: { paymentStatus: 'paid', orderStatus: { $ne: 'cancelled' }, paymentEnvironment: { $nin: ['simulator', 'sandbox'] }, paidAt: { $gte: start, ...(window && { $lt: window.end }) } } },
     { $group: {
       _id: { $dateTrunc: { date: '$paidAt', unit: period, timezone, ...(period === 'week' ? { startOfWeek: 'monday' } : {}) } },
       revenue: { $sum: '$totals.total' }, paidOrders: { $sum: 1 },

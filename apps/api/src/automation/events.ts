@@ -4,7 +4,7 @@ import { z } from 'zod';
 
 export const eventTypes = [
   'order.created', 'order.status_changed', 'payment.completed', 'payment.failed',
-  'product.created', 'product.updated', 'inventory.low_stock', 'review.created', 'customer.registered',
+  'product.created', 'product.updated', 'inventory.low_stock', 'review.created', 'customer.registered', 'order.feedback_requested',
 ] as const;
 export type EventType = typeof eventTypes[number];
 
@@ -18,7 +18,8 @@ export const envelopeSchema = z.strictObject({
   payload: z.record(z.string().regex(/^[A-Za-z][A-Za-z0-9]{0,39}$/), z.union([z.string().max(160), z.number(), z.boolean()])),
 });
 export type Envelope = z.infer<typeof envelopeSchema>;
-export type EventState = 'queued' | 'sending' | 'retry' | 'failed' | 'delivered';
+export const eventStates = ['queued', 'sending', 'retry', 'failed', 'delivered'] as const;
+export type EventState = typeof eventStates[number];
 
 interface EventRecord {
   event: Envelope;
@@ -36,7 +37,7 @@ interface EventRecord {
 
 const outboxSchema = new Schema<EventRecord>({
   event: { type: Schema.Types.Mixed, required: true },
-  state: { type: String, enum: ['queued', 'sending', 'retry', 'failed', 'delivered'], default: 'queued' },
+  state: { type: String, enum: eventStates, default: 'queued' },
   attempts: { type: Number, default: 0 },
   nextAttempt: { type: Date, default: Date.now },
   leaseUntil: Date,
@@ -48,6 +49,8 @@ const outboxSchema = new Schema<EventRecord>({
 }, { timestamps: true, minimize: false });
 outboxSchema.index({ 'event.eventId': 1 }, { unique: true });
 outboxSchema.index({ state: 1, nextAttempt: 1, leaseUntil: 1 });
+outboxSchema.index({ state: 1, createdAt: -1 });
+outboxSchema.index({ createdAt: -1 });
 export const Outbox = model('Outbox', outboxSchema);
 
 export async function recordEvent(

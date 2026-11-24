@@ -1,0 +1,80 @@
+{
+  "id": "ZestoraCustomerFeedback",
+  "name": "Customer Feedback Invitation",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "zestora-customer-feedback",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      },
+      "id": "422b8aea-9647-4e52-8a5c-62c7fa495d39",
+      "name": "Receive signed event",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "4685aea3-f078-41de-ac66-ad9f4132330a"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:3001/api/integrations/n8n/consume",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-zestora-timestamp",
+              "value": "={{ $json.headers['x-zestora-timestamp'] }}"
+            },
+            {
+              "name": "x-zestora-signature",
+              "value": "={{ $json.headers['x-zestora-signature'] }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify($json.body) }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "80963e8b-45b1-462f-8209-6ca50610d02e",
+      "name": "Verify and process in Zestora",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Receive signed event": {
+      "main": [
+        [
+          {
+            "node": "Verify and process in Zestora",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "none",
+    "saveDataSuccessExecution": "none",
+    "saveManualExecutions": false,
+    "timezone": "Asia/Colombo"
+  },
+  "pinData": {}
+}

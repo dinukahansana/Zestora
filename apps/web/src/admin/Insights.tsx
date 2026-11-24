@@ -13,9 +13,13 @@ interface Report {
   summary: string;
   insights: string[];
   source: string;
+  createdAt: string;
+  scheduleKey?: string;
 }
 interface Draft { _id: string; type: string; content: string; source: string; status: string; language: 'en' | 'si' }
 interface Counts { _id: string; count: number }
+interface Usage { _id: string; requests: number; success: number; inputTokens: number; outputTokens: number; durationMs: number }
+interface StockUsage { slug: string; name: LocalText; used: number; unit: string; onHand: number; demand: { orders: number; days: number; nextWeekUnits: number | null } }
 
 export function InsightsAdmin() {
   const { t, i18n } = useTranslation();
@@ -27,7 +31,8 @@ export function InsightsAdmin() {
   const reports = useQuery({ queryKey: ['admin', 'ai', 'reports'], queryFn: () => api<{ items: Report[] }>('/admin/ai/reports') });
   const drafts = useQuery({ queryKey: ['admin', 'ai', 'drafts'], queryFn: () => api<{ items: Draft[] }>('/admin/ai/drafts') });
   const feedback = useQuery({ queryKey: ['admin', 'ai', 'feedback'], queryFn: () => api<{ count: number; sentiments: Counts[]; topics: Counts[] }>('/admin/ai/feedback') });
-  const stock = useQuery({ queryKey: ['admin', 'ai', 'inventory'], queryFn: () => api<{ items: { slug: string; name: LocalText; used: number; unit: string; onHand: number }[] }>('/admin/ai/inventory') });
+  const stock = useQuery({ queryKey: ['admin', 'ai', 'inventory'], queryFn: () => api<{ items: StockUsage[] }>('/admin/ai/inventory') });
+  const usage = useQuery({ queryKey: ['admin', 'ai', 'usage'], queryFn: () => api<{ enabled: boolean; items: Usage[] }>('/admin/ai/usage'), refetchInterval: 30000 });
   const [reportChoice, setReportChoice] = useState('');
   const report = reports.data?.items.find(item => item._id === reportChoice) ?? reports.data?.items[0];
 
@@ -37,6 +42,7 @@ export function InsightsAdmin() {
     try {
       await work();
       await cache.invalidateQueries({ queryKey: ['admin', 'ai', area] });
+      void cache.invalidateQueries({ queryKey: ['admin', 'ai', 'usage'] });
     } catch (error) { setError(error); }
     finally { setPending(false); }
   }
@@ -65,13 +71,13 @@ export function InsightsAdmin() {
         <RequestError error={reports.error} />
         {report && <div className="grid gap-3">
           <label className="grid gap-1 text-sm font-bold">{t('ai.savedReport')}<select className="field" value={report._id} onChange={event => setReportChoice(event.target.value)}>
-            {reports.data?.items.map(item => <option key={item._id} value={item._id}>{t(`admin.${item.period}`)} · {formatPrice(item.metrics.totals.revenue, language)}</option>)}
+            {reports.data?.items.map(item => <option key={item._id} value={item._id}>{t(`admin.${item.period}`)} · {item.scheduleKey ? item.scheduleKey.split(':')[1] : new Date(item.createdAt).toLocaleString(language)}</option>)}
           </select></label>
           <dl className="grid gap-2 rounded-xl bg-moss p-3 text-sm">
             <div className="flex justify-between"><dt>{t('admin.revenue')}</dt><dd className="font-bold">{formatPrice(report.metrics.totals.revenue, language)}</dd></div>
             <div className="flex justify-between"><dt>{t('ai.paidOrders')}</dt><dd className="font-bold">{report.metrics.totals.paidOrders}</dd></div>
           </dl>
-          <p className="text-xs font-bold text-muted">{t(`ai.source.${report.source}`)}</p>
+          <p className="text-xs font-bold text-muted">{t(report.scheduleKey ? 'ai.scheduled' : 'ai.manual')} · {t(`ai.source.${report.source}`)}</p>
           <p>{report.summary}</p>
           <ul className="grid gap-1 pl-5">{report.insights.map(item => <li key={item} className="list-disc">{item}</li>)}</ul>
         </div>}
@@ -93,6 +99,19 @@ export function InsightsAdmin() {
         {stock.data?.items.length === 0 && <p>{t('admin.empty')}</p>}
         <ul className="grid gap-2">{stock.data?.items.map(item => <li key={item.slug} className="rounded-lg border border-line p-2">
           <strong>{item.name[language]}</strong><p className="text-sm text-muted">{t('ai.stockUsageLine', { used: item.used, onHand: item.onHand, unit: item.unit })}</p>
+          <p className="mt-1 text-sm">{item.demand.nextWeekUnits === null ? t('ai.demandUnavailable', { orders: item.demand.orders, days: item.demand.days }) : t('ai.demandEstimate', { units: item.demand.nextWeekUnits, unit: item.unit })}</p>
+        </li>)}</ul>
+      </Panel>
+
+      <Panel title={t('ai.usageTitle')}>
+        <RequestError error={usage.error} />
+        {usage.isPending && <p role="status">{t('common.loading')}</p>}
+        {usage.data && <p className="mb-3 text-sm text-muted">{t(usage.data.enabled ? 'ai.usageEnabled' : 'ai.usageDisabled')}</p>}
+        {usage.data?.items.length === 0 && <p>{t('admin.empty')}</p>}
+        <ul className="grid gap-2">{usage.data?.items.map(item => <li key={item._id} className="rounded-lg border border-line p-2">
+          <strong>{t('ai.feature.' + item._id, { defaultValue: item._id })}</strong>
+          <p className="text-sm text-muted">{t('ai.usageRequests', { success: item.success, requests: item.requests, duration: Math.round(item.durationMs) })}</p>
+          <p className="text-sm text-muted">{t('ai.usageTokens', { input: item.inputTokens, output: item.outputTokens })}</p>
         </li>)}</ul>
       </Panel>
 

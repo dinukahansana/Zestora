@@ -2,7 +2,7 @@ import express, { Router, type Response } from 'express';
 import mongoose, { type ClientSession, type Types } from 'mongoose';
 import { z } from 'zod';
 import { automationConfigured } from '../automation/delivery.ts';
-import { Outbox, recordEvent } from '../automation/events.ts';
+import { eventStates, Outbox, recordEvent } from '../automation/events.ts';
 import { User } from '../auth/models.ts';
 import { sessionAccess } from '../auth/routes.ts';
 import { Category, Product } from '../catalogue/models.ts';
@@ -10,7 +10,7 @@ import { categoryInput, productInput, productValues, slugSchema } from '../catal
 import type { AppConfig } from '../config.ts';
 import { HttpError, parseInput } from '../http.ts';
 import type { SendEmail } from '../mail.ts';
-import { deliverNotice, prepareNotice } from '../notifications.ts';
+import { deliverNotice, Notification, prepareNotice } from '../notifications.ts';
 import { Coupon, Order, orderStates, Shop, type OrderRecord, type OrderState } from '../ordering/models.ts';
 import { restoreStock } from '../ordering/inventory.ts';
 import { orderView } from '../ordering/routes.ts';
@@ -79,9 +79,15 @@ export function adminRouter(config: AppConfig, uploadImage?: UploadImage, sendEm
     const { period } = parseInput(periodInput, request.query);
     response.json({ period, items: await revenueReport(period) });
   });
-  router.get('/automation', async (_request, response) => {
-    const items = await Outbox.find().sort({ createdAt: -1 }).limit(100).select('event state attempts nextAttempt deliveredAt processedAt lastError').lean();
-    response.json({ enabled: automationConfigured(config), items });
+  router.get('/automation', async (request, response) => {
+    const { state } = parseInput(z.strictObject({ state: z.enum(eventStates).optional() }), request.query);
+    const rows = await Outbox.find(state ? { state } : {}).sort({ createdAt: -1 }).limit(100)
+      .select('event state attempts nextAttempt deliveredAt processedAt lastError noticeKey').lean();
+    const keys = rows.flatMap(row => row.noticeKey ? [row.noticeKey] : row.event.eventType === 'inventory.low_stock' ? ['stock:' + row.event.eventId] : []);
+    const notices = await Notification.find({ key: { $in: keys } }).select('key status').lean();
+    const delivery = new Map(notices.map(notice => [notice.key, notice.status]));
+    const items = rows.map(({ noticeKey, ...row }) => ({ ...row, noticeStatus: delivery.get(noticeKey ?? 'stock:' + row.event.eventId) }));
+    response.json({ enabled: automationConfigured(config), scheduleEnabled: !!config.n8nScheduleKey, items });
   });
   router.post('/automation/:eventId/retry', async (request, response) => {
     const eventId = parseInput(z.uuid(), request.params.eventId);
@@ -184,9 +190,12 @@ export function adminRouter(config: AppConfig, uploadImage?: UploadImage, sendEm
       await record.save({ session });
       const key = status === 'pending' ? undefined : await prepareNotice(record, status, session, sendEmail);
       await recordEvent('order.status_changed', reference, { status }, session, key);
-      return { order: record, key };
+      const feedbackKey = status === 'completed' && record.feedbackEmail
+        ? await prepareNotice(record, 'feedback', session, sendEmail, config.siteOrigin) : undefined;
+      if (feedbackKey) await recordEvent('order.feedback_requested', reference, {}, session, feedbackKey);
+      return { order: record, key, feedbackKey };
     });
-    if (!automationConfigured(config)) void deliverNotice(result.key, sendEmail);
+    if (!automationConfigured(config)) void Promise.all([deliverNotice(result.key, sendEmail), deliverNotice(result.feedbackKey, sendEmail)]);
     response.json({ order: orderView(result.order) });
   });
   router.patch('/orders/:reference/cash-payment', async (request, response) => {

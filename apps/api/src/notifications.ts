@@ -8,7 +8,7 @@ const notificationSchema = new Schema({
   to: { type: String, required: true },
   subject: { type: String, required: true },
   text: { type: String, required: true },
-  status: { type: String, enum: ['queued', 'sending', 'sent', 'failed'], default: 'queued' },
+  status: { type: String, enum: ['queued', 'sending', 'sent', 'failed', 'suppressed'], default: 'queued' },
 }, { timestamps: true });
 export const Notification = model('Notification', notificationSchema);
 
@@ -22,18 +22,22 @@ const events = {
   cancelled: ['Your order was cancelled', 'ඔබේ ඇණවුම අවලංගු කරන ලදී'],
   paid: ['Your payment was recorded', 'ඔබේ ගෙවීම සටහන් කරන ලදී'],
   failed: ['Your online payment was unsuccessful', 'ඔබේ මාර්ගගත ගෙවීම අසාර්ථක විය'],
+  feedback: ['How was your order?', 'ඔබේ ඇණවුම කොහොමද?'],
   refunded: ['Your online payment was reversed', 'ඔබේ මාර්ගගත ගෙවීම ආපසු හරවා ඇත'],
 } satisfies Record<string, [string, string]>;
 type Notice = keyof typeof events;
 
-export async function prepareNotice(order: OrderRecord, event: Notice, session: ClientSession, sendEmail?: SendEmail) {
+export async function prepareNotice(order: OrderRecord, event: Notice, session: ClientSession, sendEmail?: SendEmail, siteOrigin?: string) {
   if (!sendEmail || (order.paymentEnvironment && order.paymentEnvironment !== 'live')) return;
+  if (event === 'feedback' && (!order.feedbackEmail || !siteOrigin)) return;
   const shop = await Shop.findOne({ key: 'default' }).select('notificationsEnabled presentation.name').session(session).lean();
   if (shop?.notificationsEnabled === false) return;
   const key = `${order.reference}:${event}`;
   const language = order.language === 'si' ? 1 : 0;
   const subject = events[event][language];
-  const text = `${subject}.\n${language === 1 ? 'ඇණවුම් යොමුව' : 'Order reference'}: ${order.reference}\n${shop?.presentation?.name ?? 'Zestora'}`;
+  const orderText = `${subject}.\n${language === 1 ? 'ඇණවුම් යොමුව' : 'Order reference'}: ${order.reference}\n${shop?.presentation?.name ?? 'Zestora'}`;
+  const feedbackPath = order.userId ? '/track?reference=' + order.reference : '/contact';
+  const text = event === 'feedback' && siteOrigin ? orderText + '\n' + new URL(feedbackPath, siteOrigin) : orderText;
   await Notification.updateOne({ key }, { $setOnInsert: { key, to: order.customer.email, subject, text, status: 'queued' } }, { session, upsert: true, timestamps: false });
   return key;
 }
@@ -43,6 +47,10 @@ export async function deliverNotice(key?: string, sendEmail?: SendEmail) {
   try {
     const job = await Notification.findOneAndUpdate({ key, status: 'queued' }, { $set: { status: 'sending' } }, { returnDocument: 'after' }).lean();
     if (!job) return;
+    if (key.endsWith(':feedback') && await Shop.exists({ key: 'default', notificationsEnabled: false })) {
+      await Notification.updateOne({ key, status: 'sending' }, { $set: { status: 'suppressed' } });
+      return;
+    }
     const mail: Email = { to: job.to, subject: job.subject, text: job.text };
     let status = 'sent';
     try { await sendEmail(mail); } catch { status = 'failed'; }

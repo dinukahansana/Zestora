@@ -39,4 +39,5 @@ const stockMovement = new Schema({
   usage: [new Schema({ stockSlug: { type: String, required: true }, units: { type: Number, required: true } }, { _id: false })],
   releasedAt: Date,
 }, { timestamps: true });
+stockMovement.index({ createdAt: 1 });
 export const StockMovement = model('StockMovement', stockMovement);

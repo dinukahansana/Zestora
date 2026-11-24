@@ -1,0 +1,67 @@
+{
+  "id": "ZestoraScheduledReports",
+  "name": "Scheduled Sales Reports",
+  "nodes": [
+    {
+      "id": "e2ef4c02-9fd7-404f-bb16-dede9b754747",
+      "name": "Hourly report schedule",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "10 * * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "092c5a48-4470-4249-88c8-fdefc47ad890",
+      "name": "Save closed-period reports",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:3001/api/integrations/n8n/scheduled-reports",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 40000
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Hourly report schedule": {
+      "main": [
+        [
+          {
+            "node": "Save closed-period reports",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "none",
+    "saveDataSuccessExecution": "none",
+    "saveManualExecutions": false,
+    "timezone": "Asia/Colombo"
+  },
+  "pinData": {}
+}

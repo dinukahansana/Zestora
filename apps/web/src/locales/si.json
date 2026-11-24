@@ -207,7 +207,8 @@
     "keepKey": "පසුව ඔබේ ඇණවුම බැලීමට මෙම යතුර සහ ඇණවුම් යොමුව සුරකින්න.",
     "findOrder": "ඇණවුම සොයන්න",
     "signedTracking": "ඔබේ ගිණුමේ ඇණවුමක් සඳහා යොමුව ඇතුළත් කර යතුර හිස්ව තබන්න.",
-    "confirmation": "ඇණවුම තහවුරු කිරීම"
+    "confirmation": "ඇණවුම තහවුරු කිරීම",
+    "feedbackEmail": "මෙම ඇණවුම ගැන ප්‍රතිචාර ඉල්ලීමක් විද්‍යුත් තැපෑලෙන් එවන්න."
   },
   "account": {
     "title": "ගිණුම",
@@ -400,7 +401,21 @@
       "product_updated": "නිෂ්පාදනය වෙනස් විය",
       "inventory_low_stock": "තොගය අඩුයි",
       "review_created": "ප්‍රතිචාරය සාදන ලදී",
-      "customer_registered": "පාරිභෝගිකයා ලියාපදිංචි විය"
+      "customer_registered": "පාරිභෝගිකයා ලියාපදිංචි විය",
+      "order_feedback_requested": "ප්‍රතිචාර ඇරයුම"
+    },
+    "scheduleEnabled": "n8n හරහා නියමිත වාර්තා සෑදිය හැක.",
+    "scheduleDisabled": "නියමිත වාර්තා තවම සකසා නැත.",
+    "filter": "ක්‍රියාවලි තත්ත්වය",
+    "allStates": "සියලු තත්ත්ව",
+    "mail": "විද්‍යුත් තැපැල් තත්ත්වය · {{state}}",
+    "nextAttempt": "ඊළඟ උත්සාහය · {{time}}",
+    "notice": {
+      "queued": "පෝලිමේ",
+      "sending": "යවමින්",
+      "sent": "යවන ලදී",
+      "failed": "අසාර්ථකයි",
+      "suppressed": "නවත්වා ඇත"
     }
   },
   "ai": {
@@ -466,6 +481,23 @@
       "draft": "කෙටුම්පත",
       "approved": "අනුමතයි"
     },
-    "approveDraft": "කෙටුම්පත අනුමත කරන්න"
+    "approveDraft": "කෙටුම්පත අනුමත කරන්න",
+    "findPairing": "ගැළපෙන පානයක් සොයන්න",
+    "scheduled": "නියමිත වාර්තාව",
+    "manual": "අතින් සෑදූ වාර්තාව",
+    "demandUnavailable": "ඉල්ලුම ඇස්තමේන්තු කිරීමට දින 7ක ගෙවූ ඇණවුම් 15ක් අවශ්‍යයි. දැනට දින {{days}}ක ඇණවුම් {{orders}}ක් ඇත.",
+    "demandEstimate": "පසුගිය දින 30 අනුව ඉදිරි දින 7ට ඇස්තමේන්තුව · {{units}} {{unit}}",
+    "usageTitle": "පසුගිය දින 30 තුළ AI භාවිතය",
+    "usageEnabled": "AI සේවාව සකසා ඇත.",
+    "usageDisabled": "AI සේවාව තවම සකසා නැත.",
+    "usageRequests": "ඉල්ලීම් {{requests}}කින් {{success}}ක් සාර්ථකයි · සාමාන්‍යය {{duration}} ms",
+    "usageTokens": "ආදාන ටෝකන {{input}} · ප්‍රතිදාන ටෝකන {{output}}",
+    "feature": {
+      "assistant": "මෙනු සහායක",
+      "recommendations": "නිර්දේශ",
+      "reporting": "වාර්තා",
+      "feedback": "ප්‍රතිචාර විශ්ලේෂණය",
+      "marketing": "අලෙවිකරණ කෙටුම්පත්"
+    }
   }
 }

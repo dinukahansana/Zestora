@@ -17,8 +17,9 @@ async function startCheckout(page: Page, size = 'regular', qty = '1') {
 test('guest can place a delivery order and track it with the separate key', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await startCheckout(page, 'large', '2');
+  await expect(page.getByRole('checkbox', { name: 'Email me one feedback invitation for this order.' })).not.toBeChecked();
   await page.getByLabel('Your name').fill('Guest Example');
-  await page.getByLabel('Email').fill('guest-order@zestora.example');
+  await page.getByLabel('Email', { exact: true }).fill('guest-order@zestora.example');
   await page.getByLabel('Phone').fill('+94 71 000 0000');
   await page.getByLabel(/Fulfilment/).selectOption('delivery');
   await page.getByLabel(/Delivery zone/).selectOption('colombo');
@@ -46,7 +47,7 @@ test('a customer saves an address, places a pickup order, and reorders from hist
   await page.goto('/account');
   await page.getByRole('button', { name: 'Create account' }).click();
   await page.getByLabel('Your name').fill('Account Buyer');
-  await page.getByLabel('Email').fill(email);
+  await page.getByLabel('Email', { exact: true }).fill(email);
   await page.getByLabel('Password').fill(randomBytes(18).toString('base64url'));
   await page.getByRole('button', { name: 'Create account' }).click();
   await expect(page.getByRole('heading', { name: 'Profile' })).toBeVisible();
@@ -56,7 +57,7 @@ test('a customer saves an address, places a pickup order, and reorders from hist
   await expect(page.getByText('Example residence, Colombo')).toBeVisible();
 
   await startCheckout(page);
-  await expect(page.getByLabel('Email')).toHaveValue(email);
+  await expect(page.getByLabel('Email', { exact: true })).toHaveValue(email);
   await page.getByLabel('Phone').fill('+94 71 000 0000');
   await page.getByRole('button', { name: 'Review total' }).click();
   await page.getByRole('button', { name: 'Place order' }).click();
@@ -72,7 +73,7 @@ test('a customer saves an address, places a pickup order, and reorders from hist
 test('checkout can simulate a PayHere decline and success without a real charge', async ({ page }) => {
   await startCheckout(page);
   await page.getByLabel('Your name').fill('Simulator Buyer');
-  await page.getByLabel('Email').fill('simulator@zestora.example');
+  await page.getByLabel('Email', { exact: true }).fill('simulator@zestora.example');
   await page.getByLabel('Phone').fill('+94 71 000 0000');
   await page.getByLabel(/Payment method/).selectOption('payhere');
   await expect(page.getByText('Development simulator. No real charge.')).toBeVisible();

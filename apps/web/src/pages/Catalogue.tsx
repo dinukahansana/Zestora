@@ -185,6 +185,7 @@ export function ProductPage() {
             {product.ingredients.map(item => <li key={item.en} className="rounded-full border border-line bg-paper px-3 py-1 text-sm">{item[language]}</li>)}
           </ul>
           <ProductOptions key={product.slug} product={product} />
+          {orderingEnabled && <Link className="mt-4 inline-block font-bold underline" to={`/recommendations?product=${product.slug}`}>{t('ai.findPairing')}</Link>}
         </div>
       </div>
       <section className="mt-12 border-t border-line pt-8">

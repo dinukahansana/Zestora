@@ -25,11 +25,11 @@ const qualitative = z.strictObject({ summary: z.string().trim().min(1).max(900),
 const sentiments = z.strictObject({ sentiment: z.enum(['positive', 'neutral', 'negative']), topics: shortList });
 const draftText = z.strictObject({ content: z.string().trim().min(1).max(1600) });
 
-export async function createReport(period: 'day' | 'week' | 'month', language: Language, runner: AiRunner, scheduleKey?: string) {
+export async function createReport(period: 'day' | 'week' | 'month', language: Language, runner: Pick<AiRunner, 'complete'>, schedule?: { key: string; start: Date; end: Date }) {
   const shop = await currentShop();
-  const rows = await revenueReport(period);
+  const rows = await revenueReport(period, schedule);
   const totals = rows.reduce((value, row) => ({ revenue: value.revenue + row.revenue, paidOrders: value.paidOrders + row.paidOrders }), { revenue: 0, paidOrders: 0 });
-  const metrics = { totals, rows };
+  const metrics = { totals, rows, ...(schedule && { window: { start: schedule.start.toISOString(), end: schedule.end.toISOString() } }) };
   const proposed = shop.aiEnabled && rows.length ? await runner.complete('reporting',
     'Summarize the verified sales metrics qualitatively in the requested language. Return JSON with summary and insights. Do not write figures, numbers, estimates, promises, or unsupported reasons.',
     { metrics, language }, qualitative) : undefined;
@@ -40,8 +40,8 @@ export async function createReport(period: 'day' | 'week' | 'month', language: L
       : language === 'si' ? 'මෙම කාලය සඳහා ගෙවූ ඇණවුම් නැත.' : 'There are no paid orders for this period.',
     insights: [],
   };
-  const data = { period, metrics, ...(model ?? fallback), source: model ? ('ai' as const) : ('fallback' as const), language, scheduleKey };
-  if (scheduleKey) return BusinessReport.findOneAndUpdate({ scheduleKey }, { $setOnInsert: data }, { upsert: true, returnDocument: 'after' });
+  const data = { period, metrics, ...(model ?? fallback), source: model ? ('ai' as const) : ('fallback' as const), language, scheduleKey: schedule?.key };
+  if (schedule) return BusinessReport.findOneAndUpdate({ scheduleKey: schedule.key }, { $setOnInsert: data }, { upsert: true, returnDocument: 'after' });
   return BusinessReport.create(data);
 }
 

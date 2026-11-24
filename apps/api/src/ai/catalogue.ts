@@ -4,8 +4,10 @@ import { z } from 'zod';
 import { currentShop } from '../admin/settings.ts';
 import { withStockAvailability } from '../catalogue/availability.ts';
 import { Category, Product, type ProductRecord } from '../catalogue/models.ts';
+import { slugSchema } from '../catalogue/schemas.ts';
 import { Order } from '../ordering/models.ts';
 import { guestKeySchema, orderReference } from '../ordering/schemas.ts';
+import { purchasedTogether } from './pairings.ts';
 import { redact } from './provider.ts';
 import type { AiRunner } from './runner.ts';
 
@@ -17,7 +19,7 @@ export const assistantInput = z.strictObject({
   question, language: languageSchema, reference: orderReference.optional(), guestKey: guestKeySchema.optional(),
 });
 export const recommendationInput = z.strictObject({
-  preference: question, language: languageSchema,
+  preference: question, language: languageSchema, basedOn: slugSchema.optional(),
   exclude: z.array(z.string().trim().min(2).max(40)).max(8).default([]),
 });
 
@@ -119,11 +121,15 @@ export async function assistant(data: z.infer<typeof assistantInput>, runner: Ai
 
 export async function recommendations(data: z.infer<typeof recommendationInput>, runner: AiRunner, customerId?: Types.ObjectId) {
   const shop = await currentShop();
-  const orders = customerId ? await Order.find({ userId: customerId, orderStatus: 'completed' }).sort({ createdAt: -1 }).limit(20).select('items.productSlug').lean() : [];
+  const orders = customerId ? await Order.find({ userId: customerId, orderStatus: 'completed', paymentEnvironment: { $nin: ['sandbox', 'simulator'] } }).sort({ createdAt: -1 }).limit(20).select('items.productSlug').lean() : [];
   const history = new Set(orders.flatMap(order => order.items.map(item => item.productSlug)));
-  const available = (await productsForAssistant()).filter(item => item.available &&
+  const catalogue = await productsForAssistant();
+  const published = new Set(catalogue.map(item => item.slug));
+  const seeds = (data.basedOn ? [data.basedOn] : [...history].slice(0, 8)).filter(slug => published.has(slug));
+  const pairings = await purchasedTogether(seeds);
+  const available = catalogue.filter(item => item.available && item.slug !== data.basedOn &&
     !data.exclude.some(excluded => item.ingredients.some(part => Object.values(part).some(value => normalize(value).includes(normalize(excluded))))));
-  const ranked = available.map(item => ({ item, score: searchScore(item, data.preference) * 4 + Number(history.has(item.slug)) + Number(item.featured) }))
+  const ranked = available.map(item => ({ item, score: searchScore(item, data.preference) * 5 + Math.min(pairings.get(item.slug) ?? 0, 3) + Number(history.has(item.slug)) + Number(item.featured) }))
     .sort((left, right) => right.score - left.score || left.item.slug.localeCompare(right.item.slug)).map(value => value.item);
   const model = shop.aiEnabled && ranked.length ? await runner.complete('recommendations',
     'Recommend up to three drinks or bowls for the preference. Return JSON with a slugs array, using only products from the provided catalogue, with matching options first.',
@@ -136,7 +142,9 @@ export async function recommendations(data: z.infer<typeof recommendationInput>,
       ...productView(item, data.language),
       reason: searchScore(item, data.preference)
         ? data.language === 'si' ? 'ඔබේ රස තේරීමට ගැළපේ.' : 'Matches your flavour preferences.'
-        : data.language === 'si' ? 'දැනට ලබා ගත හැකි මෙනු තේරීමකි.' : 'An available option from the menu.',
+        : pairings.has(item.slug)
+          ? data.language === 'si' ? 'මෙම මෙනු අයිතම එකට ඇණවුම් කර ඇත.' : 'Ordered alongside the selected or recently purchased items.'
+          : data.language === 'si' ? 'දැනට ලබා ගත හැකි මෙනු තේරීමකි.' : 'An available option from the menu.',
     })),
   };
 }

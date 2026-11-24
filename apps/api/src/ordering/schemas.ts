@@ -37,6 +37,7 @@ export const checkoutInput = z.strictObject({
   notes: comment,
   payment: z.enum(['cash', 'payhere']).default('cash'),
   billing: z.strictObject({ address: z.string().trim().min(8).max(350), city: z.string().trim().min(2).max(100) }).optional(),
+  feedbackEmail: z.boolean().default(false),
   language: z.enum(['en', 'si']).default('en'),
   expectedTotal: z.number().int().nonnegative().max(1000000000),
   checkoutKey: z.uuid(),

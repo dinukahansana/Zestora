@@ -1,0 +1,9 @@
+{
+  "eventId": "eb46c512-7a13-4160-8217-6696b0f8de0c",
+  "eventType": "order.feedback_requested",
+  "schemaVersion": 1,
+  "occurredAt": "2026-01-01T12:00:00.000Z",
+  "businessId": "default",
+  "resourceId": "Z-0123456789ABCDEF0123",
+  "payload": {}
+}

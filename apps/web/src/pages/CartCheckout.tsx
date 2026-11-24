@@ -138,6 +138,7 @@ export function CheckoutPage() {
         fulfillment: type === 'delivery' ? { type, zoneId, address, instructions: value('instructions'), preferredAt } : { type, preferredAt },
         notes: value('notes'),
         expectedTotal: currentQuote.totals.total,
+        ...(values.has('feedbackEmail') && { feedbackEmail: true }),
         payment,
         billing: payment === 'payhere' ? { address: value('billingAddress'), city: value('billingCity') } : undefined,
         language,
@@ -198,6 +199,7 @@ export function CheckoutPage() {
                 </div>}
                 <label className="grid gap-1 text-sm font-bold">{t('commerce.preferredAt')}<input name="preferredAt" type="datetime-local" className="field" /></label>
                 <label className="grid gap-1 text-sm font-bold">{t('commerce.notes')}<textarea name="notes" className="field" maxLength={500} /></label>
+                <label className="flex items-start gap-2 text-sm"><input className="mt-1 accent-forest" type="checkbox" name="feedbackEmail" />{t('commerce.feedbackEmail')}</label>
               </div>
 
               <section className="grid gap-4 rounded-2xl border border-line bg-moss/40 p-5 sm:p-7">

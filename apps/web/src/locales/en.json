@@ -207,7 +207,8 @@
     "keepKey": "Save this key and the order reference to look up your guest order later.",
     "findOrder": "Find order",
     "signedTracking": "For your account orders, enter the reference and leave the key empty.",
-    "confirmation": "Order confirmation"
+    "confirmation": "Order confirmation",
+    "feedbackEmail": "Email me one feedback invitation for this order."
   },
   "account": {
     "title": "Account",
@@ -400,7 +401,21 @@
       "product_updated": "Product updated",
       "inventory_low_stock": "Low stock",
       "review_created": "Review created",
-      "customer_registered": "Customer registered"
+      "customer_registered": "Customer registered",
+      "order_feedback_requested": "Feedback invitation"
+    },
+    "scheduleEnabled": "Scheduled reports can be triggered by n8n.",
+    "scheduleDisabled": "Scheduled reports are unconfigured.",
+    "filter": "Workflow status",
+    "allStates": "All statuses",
+    "mail": "Email status · {{state}}",
+    "nextAttempt": "Next attempt · {{time}}",
+    "notice": {
+      "queued": "Queued",
+      "sending": "Sending",
+      "sent": "Sent",
+      "failed": "Failed",
+      "suppressed": "Suppressed"
     }
   },
   "ai": {
@@ -466,6 +481,23 @@
       "draft": "Draft",
       "approved": "Approved"
     },
-    "approveDraft": "Approve draft"
+    "approveDraft": "Approve draft",
+    "findPairing": "Find a pairing",
+    "scheduled": "Scheduled report",
+    "manual": "Manual report",
+    "demandUnavailable": "Demand estimate needs 15 paid orders across 7 days. Current sample is {{orders}} orders across {{days}} days.",
+    "demandEstimate": "Estimated next 7 days · {{units}} {{unit}} based on the last 30 days",
+    "usageTitle": "AI usage over the last 30 days",
+    "usageEnabled": "Model provider is configured.",
+    "usageDisabled": "Model provider is unconfigured.",
+    "usageRequests": "{{success}} of {{requests}} successful · {{duration}} ms average",
+    "usageTokens": "{{input}} input tokens · {{output}} output tokens",
+    "feature": {
+      "assistant": "Menu assistant",
+      "recommendations": "Recommendations",
+      "reporting": "Reports",
+      "feedback": "Feedback analysis",
+      "marketing": "Marketing drafts"
+    }
   }
 }
