@@ -103,7 +103,9 @@ test('owner previews and publishes a bilingual policy used by the shop and assis
   await page.getByRole('button', { name: 'Publish saved draft' }).click();
   await expect(page.getByText('Policy published.')).toBeVisible();
   await page.getByRole('link', { name: 'View public policy' }).click();
-  await expect(page.getByText(english, { exact: true })).toBeVisible();
+  await expect(page).toHaveURL(/\/refunds$/);
+  await expect(page.getByRole('heading', { name: 'Refund policy', exact: true, level: 1 })).toBeVisible();
+  await expect(page.getByText(english, { exact: true }).filter({ visible: true })).toBeVisible();
   await expect(page.getByText('Policy preview')).toHaveCount(0);
   await page.getByRole('combobox', { name: 'Language' }).first().selectOption('si');
   await expect(page.getByText(sinhala, { exact: true })).toBeVisible();
