@@ -1,0 +1,10 @@
+{
+  "requestId": "5a39dabd-2ba8-48cc-a79e-db25dc7758a8",
+  "feature": "assistant",
+  "rule": "Return JSON with intent and slugs for the verified catalogue.",
+  "data": {
+    "question": "Which drinks contain mango?",
+    "language": "en",
+    "catalogue": []
+  }
+}

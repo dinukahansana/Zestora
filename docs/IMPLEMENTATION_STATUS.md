@@ -75,6 +75,16 @@ The starter page and health endpoint are the two implemented features. MongoDB A
 | Monitoring | The admin Automation tab lists status and attempts and requeues terminal failures. |
 | Checks | Twenty-one API cases, eleven browser cases, type checks and both builds, and the n8n integration smoke test. |
 
+## Phase 7
+
+| Area | Status |
+| --- | --- |
+| Customer AI | Bilingual assistant and recommendations use the current catalogue, apply exclusions, and verify guest or owner order access before returning a status. |
+| Administration | Saved reports, feedback summaries, ingredient usage, and reviewable marketing drafts and approval. |
+| Stock | Product recipes reserve ingredients in the same transaction as an order. Cancelling restores stock exactly once. Low-stock notices use the outbox. |
+| n8n | Nine published workflows exercised in local n8n 2.48.8. Four synchronous AI tasks and two new event workflows included a controlled local model endpoint and captured mail transport. |
+| Checks | Type checking, both builds, API integration tests, browser storefront and shop checks, and n8n integration. A commercial model account can be configured independently. |
+
 ## Next milestone
 
-Phase 7 adds the customer assistant, recommendations, business intelligence, feedback analysis, marketing drafts, and inventory insights.
+Phase 8 adds scheduled reports, customer communication, stronger recommendations, demand insights, and workflow and AI usage monitoring.

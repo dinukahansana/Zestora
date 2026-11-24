@@ -45,7 +45,12 @@ export function CataloguePage() {
 
   return (
     <>
-      <PageHeading title={t('menu.title')}><p>{t('menu.description')}</p></PageHeading>
+      <PageHeading title={t('menu.title')}><p>{t('menu.description')}</p>
+        {orderingEnabled && <div className="mt-4 flex flex-wrap gap-2">
+          <Link className="button button-outline" to="/assistant">{t('ai.assistant')}</Link>
+          <Link className="button button-outline" to="/recommendations">{t('ai.recommendations')}</Link>
+        </div>}
+      </PageHeading>
       <div className="container-wide py-8 sm:py-12">
         {!catalogue.data && <CatalogueMessage query={catalogue} />}
         {catalogue.data && <>

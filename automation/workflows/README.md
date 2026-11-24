@@ -1,3 +1,3 @@
 # Workflow exports
 
-Import the three JSON exports, update the HTTP Request nodes to point at your API, and publish the workflows. The order-created and order-status exports handle order mail orchestration. The general business workflow acknowledges other registered events. See [n8n setup](../../docs/N8N_SETUP.md).
+Import the JSON exports, update API origins in the HTTP Request nodes, and publish the workflows. The order and general event exports forward signed events, as do feedback analysis and low stock. The assistant, recommendations, reports, and drafts forward signed model tasks. See [n8n setup](../../docs/N8N_SETUP.md).

@@ -1,0 +1,80 @@
+{
+  "id": "ZestoraLowStock",
+  "name": "Low Stock Notification",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "zestora-low-stock",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      },
+      "id": "89844ccd-4925-4f38-843f-a505e71b45bc",
+      "name": "Receive signed event",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "66096e98-75fa-420d-84b9-601855de5989"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:3001/api/integrations/n8n/consume",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-zestora-timestamp",
+              "value": "={{ $json.headers['x-zestora-timestamp'] }}"
+            },
+            {
+              "name": "x-zestora-signature",
+              "value": "={{ $json.headers['x-zestora-signature'] }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify($json.body) }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "7af00599-be8a-4b1e-a6d5-e80aa4f76b9c",
+      "name": "Verify and process in Zestora",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Receive signed event": {
+      "main": [
+        [
+          {
+            "node": "Verify and process in Zestora",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "none",
+    "saveDataSuccessExecution": "none",
+    "saveManualExecutions": false,
+    "timezone": "Asia/Colombo"
+  },
+  "pinData": {}
+}

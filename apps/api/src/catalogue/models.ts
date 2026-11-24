@@ -30,6 +30,7 @@ const productSchema = new Schema<ProductRecord>({
   demo: { type: Boolean, default: false },
   sizes: { type: [choice], required: true },
   addOns: { type: [choice], default: [] },
+  recipe: { type: [new Schema({ stockSlug: String, units: Number }, { _id: false })], default: [] },
   startingPrice: { type: Number, min: 0, required: true },
 }, { timestamps: true });
 

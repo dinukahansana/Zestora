@@ -1,0 +1,12 @@
+{
+  "eventId": "3f42ee04-9a00-46fe-ba26-15359fe336a3",
+  "eventType": "inventory.low_stock",
+  "schemaVersion": 1,
+  "occurredAt": "2026-01-01T12:00:00.000Z",
+  "businessId": "default",
+  "resourceId": "mango",
+  "payload": {
+    "onHand": 2,
+    "threshold": 5
+  }
+}

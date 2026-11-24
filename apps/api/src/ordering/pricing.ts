@@ -1,4 +1,5 @@
 import type { ClientSession } from 'mongoose';
+import { Stock } from '../admin/models.ts';
 import { Category, Product } from '../catalogue/models.ts';
 import { HttpError } from '../http.ts';
 import { Coupon, Shop, type PricedLine, type ShopRecord } from './models.ts';
@@ -26,6 +27,7 @@ export async function priceCart(input: QuoteInput, session: ClientSession | null
   const enabled = new Set(categories.map(category => category.slug));
   const bySlug = new Map(products.map(product => [product.slug, product]));
   const variants = new Set<string>();
+  const usage = new Map<string, number>();
   const items: PricedLine[] = input.items.map(line => {
     const product = bySlug.get(line.productSlug);
     if (!product || !enabled.has(product.category)) throw new HttpError(409, 'ITEM_UNAVAILABLE', 'A requested item is no longer available.');
@@ -36,10 +38,16 @@ export async function priceCart(input: QuoteInput, session: ClientSession | null
     if (variants.has(variant)) throw new HttpError(400, 'DUPLICATE_CART_LINE', 'Combine matching items into one cart line.');
     variants.add(variant);
     const quantity = line.quantity;
+    for (const part of product.recipe ?? []) usage.set(part.stockSlug, (usage.get(part.stockSlug) ?? 0) + part.units * quantity);
     const unitPrice = size.price + addOns.reduce((total, option) => total + option.price, 0);
     return { productSlug: product.slug, name: product.name, size, addOns, quantity, unitPrice, total: unitPrice * quantity };
   });
 
+  if (usage.size) {
+    const amounts = await Stock.find({ slug: { $in: [...usage.keys()] } }).session(session).select('slug onHand').lean();
+    const stock = new Map(amounts.map(value => [value.slug, value.onHand]));
+    if ([...usage].some(([slug, units]) => (stock.get(slug) ?? 0) < units)) throw new HttpError(409, 'ITEM_UNAVAILABLE', 'An ingredient is no longer in stock.');
+  }
   const subtotal = items.reduce((total, item) => total + item.total, 0);
   if (subtotal < shop.minimumOrder) throw new HttpError(400, 'MINIMUM_ORDER', 'The cart is below the minimum order amount.');
   let discount = 0;
@@ -54,5 +62,5 @@ export async function priceCart(input: QuoteInput, session: ClientSession | null
     discount = Math.min(subtotal, amount);
   }
   const deliveryFee = zone?.fee ?? 0;
-  return { items, totals: { subtotal, discount, deliveryFee, total: subtotal - discount + deliveryFee }, couponRecord };
+  return { items, usage: [...usage].map(([stockSlug, units]) => ({ stockSlug, units })), totals: { subtotal, discount, deliveryFee, total: subtotal - discount + deliveryFee }, couponRecord };
 }

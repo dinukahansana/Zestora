@@ -8,6 +8,8 @@ const leaseTime = 30000;
 const workflow: Partial<Record<EventType, string>> = {
   'order.created': 'zestora-order-created',
   'order.status_changed': 'zestora-order-status',
+  'review.created': 'zestora-feedback-analysis',
+  'inventory.low_stock': 'zestora-low-stock',
 };
 
 export function automationConfigured(config: AppConfig) {

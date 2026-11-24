@@ -1,4 +1,7 @@
 import cors from 'cors';
+import { aiProvider } from './ai/provider.ts';
+import { aiRoutes } from './ai/routes.ts';
+import { aiRunner } from './ai/runner.ts';
 import express, { type RequestHandler } from 'express';
 import helmet from 'helmet';
 import { createImageUploader, type UploadImage } from './admin/images.ts';
@@ -22,6 +25,9 @@ export function createApp(
   uploadImage: UploadImage | undefined = createImageUploader(config),
 ) {
   const app = express();
+  const provider = aiProvider(config);
+  const runner = aiRunner(config, provider);
+  const ai = aiRoutes(config, runner, provider);
   if (config.trustProxyHops) app.set('trust proxy', config.trustProxyHops);
   app.disable('x-powered-by');
   app.use(helmet());
@@ -58,11 +64,13 @@ export function createApp(
   api.use(['/shop/checkout', '/orders'], requireDatabase);
   api.use(orderingRouter(config, sendEmail));
   api.use('/payments', requireDatabase, paymentsRouter(config, sendEmail));
-  api.use('/integrations/n8n', requireDatabase, automationRouter(config, sendEmail));
+  api.use('/integrations/n8n', requireDatabase, automationRouter(config, sendEmail, provider), runner.router);
+  api.use('/admin/ai', requireDatabase, ai.admin);
   api.use('/admin', requireDatabase, adminRouter(config, uploadImage, sendEmail));
   api.use('/shop/storefront', requireDatabase);
   api.use(storefrontSettingsRouter);
-  api.use(['/catalogue', '/products', '/categories'], requireDatabase);
+  api.use(['/catalogue', '/products', '/categories', '/ai', '/reviews'], requireDatabase);
+  api.use(ai.router);
   api.use(catalogueRouter);
   app.use('/api', api);
 

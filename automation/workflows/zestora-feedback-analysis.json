@@ -1,0 +1,80 @@
+{
+  "id": "ZestoraFeedbackAnalysis",
+  "name": "Customer Feedback Analysis",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "zestora-feedback-analysis",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      },
+      "id": "bc1ce1db-2fce-43ed-b112-5a8725cd56a8",
+      "name": "Receive signed event",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "eea0e41d-cc57-48e5-aee9-5ad8fbac521f"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:3001/api/integrations/n8n/consume",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-zestora-timestamp",
+              "value": "={{ $json.headers['x-zestora-timestamp'] }}"
+            },
+            {
+              "name": "x-zestora-signature",
+              "value": "={{ $json.headers['x-zestora-signature'] }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify($json.body) }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "ba5aa846-3b38-4970-8ece-b43bbea6a6ef",
+      "name": "Verify and process in Zestora",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Receive signed event": {
+      "main": [
+        [
+          {
+            "node": "Verify and process in Zestora",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "none",
+    "saveDataSuccessExecution": "none",
+    "saveManualExecutions": false,
+    "timezone": "Asia/Colombo"
+  },
+  "pinData": {}
+}

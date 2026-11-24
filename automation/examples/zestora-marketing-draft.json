@@ -1,0 +1,11 @@
+{
+  "requestId": "bd3a0af7-105d-4315-84cc-e1dbc562ac40",
+  "feature": "marketing",
+  "rule": "Write a draft from the supplied menu items.",
+  "data": {
+    "language": "en",
+    "type": "social",
+    "tone": "friendly",
+    "products": []
+  }
+}

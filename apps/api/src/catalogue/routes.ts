@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { HttpError, parseInput } from '../http.ts';
+import { withStockAvailability } from './availability.ts';
 import { Category, Product } from './models.ts';
 import { slugSchema } from './schemas.ts';
 
@@ -35,7 +36,7 @@ catalogueRouter.get('/catalogue', async (_request, response) => {
   const categories = await publishedCategories();
   const products = await Product.find({ published: true, category: { $in: categories.map(category => category.slug) } })
     .select(publicFields).sort(sortOrder.featured).lean();
-  response.json({ categories, products });
+  response.json({ categories, products: await withStockAvailability(products) });
 });
 
 catalogueRouter.get('/products', async (request, response) => {
@@ -45,14 +46,19 @@ catalogueRouter.get('/products', async (request, response) => {
   const filter = {
     published: true,
     category: { $in: permittedCategories },
-    ...(available === undefined ? {} : { available }),
     ...(featured === undefined ? {} : { featured }),
   };
+  if (available !== undefined) {
+    const records = await Product.find(filter).select(publicFields).sort(sortOrder[sort]).lean();
+    const matching = (await withStockAvailability(records)).filter(item => item.available === available);
+    response.json({ items: matching.slice(offset, offset + limit), offset, limit, total: matching.length });
+    return;
+  }
   const [items, total] = await Promise.all([
     Product.find(filter).select(publicFields).sort(sortOrder[sort]).skip(offset).limit(limit).lean(),
     Product.countDocuments(filter),
   ]);
-  response.json({ items, offset, limit, total });
+  response.json({ items: await withStockAvailability(items), offset, limit, total });
 });
 
 catalogueRouter.get('/products/:slug', async (request, response) => {
@@ -61,5 +67,5 @@ catalogueRouter.get('/products/:slug', async (request, response) => {
   if (!item || !(await Category.exists({ slug: item.category, published: true }))) {
     throw new HttpError(404, 'PRODUCT_NOT_FOUND', 'The product was not found.');
   }
-  response.json({ item });
+  response.json({ item: (await withStockAvailability([item]))[0] });
 });

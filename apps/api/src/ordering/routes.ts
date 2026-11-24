@@ -11,6 +11,7 @@ import type { SendEmail } from '../mail.ts';
 import { deliverNotice, prepareNotice } from '../notifications.ts';
 import { Payment } from '../payments/models.ts';
 import { paymentMode } from '../payments/payhere.ts';
+import { consumeStock } from './inventory.ts';
 import { Coupon, Order, type OrderRecord } from './models.ts';
 import { checkoutSettings, priceCart } from './pricing.ts';
 import { checkoutInput, orderReference, quoteInput, trackingInput } from './schemas.ts';
@@ -109,6 +110,7 @@ export function orderingRouter(config: AppConfig, sendEmail?: SendEmail) {
           billing: online ? input.billing : undefined,
           language: input.language,
         });
+        await consumeStock(reference, priced.usage, session);
         await order.save({ session });
         if (online) await new Payment({ orderReference: reference, environment: mode, amount: priced.totals.total }).save({ session });
         const key = await prepareNotice(order, 'created', session, sendEmail);

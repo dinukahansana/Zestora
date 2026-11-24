@@ -42,3 +42,9 @@ Order fulfilment and payment state stay distinct. A cash payment records `paidAt
 ## Automation outbox
 
 `outboxes` holds events with a unique event ID, status, attempts, next delivery time, temporary worker claim, and acknowledgement timestamps. Business transactions record their events with the relevant orders, payments, accounts, and catalogue records.
+
+## AI and inventory
+
+A product can reference stock slugs and quantities in its recipe. `StockMovement` links a unique order reference to reserved ingredient quantities and records release on cancellation. The public catalogue uses inventory to compute availability.
+
+`Review` is unique by customer, order, and product. `ReviewAnalysis` is unique by review ID and stores sentiment, topics, and source. `BusinessReport` stores computed metrics, narrative, language, source, and an optional unique schedule key. `MarketingDraft` stores content, status, and approval time. `AiRun` expires temporary request claims. `AiUsage` stores per-feature outcome, duration, and reported token counts with time-limited retention.

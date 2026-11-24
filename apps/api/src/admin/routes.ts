@@ -12,6 +12,7 @@ import { HttpError, parseInput } from '../http.ts';
 import type { SendEmail } from '../mail.ts';
 import { deliverNotice, prepareNotice } from '../notifications.ts';
 import { Coupon, Order, orderStates, Shop, type OrderRecord, type OrderState } from '../ordering/models.ts';
+import { restoreStock } from '../ordering/inventory.ts';
 import { orderView } from '../ordering/routes.ts';
 import { codeSchema, orderReference } from '../ordering/schemas.ts';
 import { validatedImage, type UploadImage } from './images.ts';
@@ -126,6 +127,8 @@ export function adminRouter(config: AppConfig, uploadImage?: UploadImage, sendEm
   });
   async function setProduct(session: ClientSession, data: z.infer<typeof productInput>, creating: boolean) {
     if (!(await Category.exists({ slug: data.category }).session(session))) missing('Category');
+    const stockCount = await Stock.countDocuments({ slug: { $in: data.recipe.map(part => part.stockSlug) } }).session(session);
+    if (stockCount !== data.recipe.length) throw new HttpError(400, 'INVALID_RECIPE', 'Choose existing inventory items for this recipe.');
     const values = productValues(data);
     const product = creating
       ? await new Product(values).save({ session })
@@ -177,6 +180,7 @@ export function adminRouter(config: AppConfig, uploadImage?: UploadImage, sendEm
       const record = await Order.findOne({ reference }).session(session) ?? missing('Order');
       if (!allowedTransition(record, status)) throw new HttpError(409, 'INVALID_TRANSITION', 'This order status change is unavailable.');
       record.orderStatus = status;
+      if (status === 'cancelled') await restoreStock(reference, session);
       await record.save({ session });
       const key = status === 'pending' ? undefined : await prepareNotice(record, status, session, sendEmail);
       await recordEvent('order.status_changed', reference, { status }, session, key);

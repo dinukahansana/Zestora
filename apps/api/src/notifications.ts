@@ -1,4 +1,5 @@
 import { model, Schema, type ClientSession } from 'mongoose';
+import { Stock } from './admin/models.ts';
 import type { Email, SendEmail } from './mail.ts';
 import { Shop, type OrderRecord } from './ordering/models.ts';
 
@@ -49,4 +50,18 @@ export async function deliverNotice(key?: string, sendEmail?: SendEmail) {
   } catch {
     console.error('Order notification dispatch failed.');
   }
+}
+
+export async function deliverStockNotice(eventId: string, slug: string, sendEmail?: SendEmail) {
+  if (!sendEmail) return;
+  const shop = await Shop.findOne({ key: 'default' }).lean();
+  if (!shop?.presentation?.email || shop.notificationsEnabled === false) return;
+  const item = await Stock.findOne({ slug }).lean();
+  if (!item || item.onHand > item.threshold) return;
+  const key = `stock:${eventId}`;
+  const si = shop.presentation.defaultLanguage === 'si';
+  const subject = si ? 'අඩු තොග දැනුම්දීම' : 'Low stock alert';
+  const text = `${item.name[si ? 'si' : 'en']}: ${item.onHand} ${item.unit} (${si ? 'අවම සීමාව' : 'threshold'} ${item.threshold})`;
+  await Notification.updateOne({ key }, { $setOnInsert: { key, subject, text, to: shop.presentation.email, status: 'queued' } }, { upsert: true, timestamps: false });
+  await deliverNotice(key, sendEmail);
 }

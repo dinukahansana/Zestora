@@ -33,3 +33,10 @@ const auditSchema = new Schema<AuditRecord>({
 auditSchema.index({ createdAt: -1 });
 export const Stock = model('Stock', stockSchema);
 export const AuditLog = model('AuditLog', auditSchema);
+
+const stockMovement = new Schema({
+  orderReference: { type: String, required: true, unique: true },
+  usage: [new Schema({ stockSlug: { type: String, required: true }, units: { type: Number, required: true } }, { _id: false })],
+  releasedAt: Date,
+}, { timestamps: true });
+export const StockMovement = model('StockMovement', stockMovement);

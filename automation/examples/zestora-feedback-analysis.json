@@ -1,0 +1,11 @@
+{
+  "eventId": "503a1116-278f-445c-97a2-8be4c7027eae",
+  "eventType": "review.created",
+  "schemaVersion": 1,
+  "occurredAt": "2026-01-01T12:00:00.000Z",
+  "businessId": "default",
+  "resourceId": "0123456789abcdef01234567",
+  "payload": {
+    "productSlug": "golden-mango"
+  }
+}

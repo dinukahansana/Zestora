@@ -1,9 +1,11 @@
 # AI integration
 
-An AI provider abstraction gives the API a consistent way to request a response while the provider and model remain configurable. Keep provider calls and keys on the server. Start with verified database queries for products, policies, and authorized order information.
+Set `AI_API_BASE_URL`, `AI_MODEL`, and the provider key in the API environment to enable an OpenAI-compatible chat completions provider. The API requests structured JSON with a short timeout. The shop can disable model calls in Business settings.
 
-Retrieval-augmented generation means giving the model relevant, verified information at the time it answers. For Zestora, a request for mango smoothies can fetch current catalogue records before the AI writes a reply. The API still validates product IDs and supplies prices and stock values itself.
+The assistant and drink finder retrieve current published products before calling the model. Express verifies chosen product IDs, applies explicit ingredient exclusions, and supplies database prices and availability. Order lookups use the account session or an exact guest tracking key and stay inside Express.
 
-The planned workflow is to authenticate and rate-limit the request, validate the input, retrieve only permitted information, call the provider with a timeout, and validate a structured response before returning it. Log usage and errors with minimal personal data. Use an appropriate fallback when the provider is unavailable. Treat customer text and external documents as untrusted input.
+Business reports keep verified metrics and model observations in separate fields. Original ratings and review text are stored separately from sentiment and topics. Marketing content is an internal draft and can be approved by an administrator. Unavailable or invalid model responses yield a labelled catalogue result, report summary, draft template, or rating-based sentiment.
 
-The [AI and automation specification](AI_AUTOMATION_SPECIFICATION.md) records feature detail and orchestration requirements. No external AI provider configuration is needed for Phase 0.
+The API strips recognized contact information and order identifiers from free text before model calls. The usage collection records feature, outcome, latency, and token counts when provided. It stores neither request text nor generated content. The business records that require review or approval store their own result fields.
+
+The [automation specification](AI_AUTOMATION_SPECIFICATION.md) documents feature boundaries. See [n8n setup](N8N_SETUP.md) for signed orchestration.

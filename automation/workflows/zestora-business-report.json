@@ -1,0 +1,80 @@
+{
+  "id": "ZestoraBusinessReport",
+  "name": "AI Business Report",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "zestora-business-report",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      },
+      "id": "2b837048-2a4a-4a4e-80ae-f611d616b2cf",
+      "name": "Receive signed event",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "be0fc9ec-1c85-4291-9928-b2e7a2fef716"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:3001/api/integrations/n8n/ai",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-zestora-timestamp",
+              "value": "={{ $json.headers['x-zestora-timestamp'] }}"
+            },
+            {
+              "name": "x-zestora-signature",
+              "value": "={{ $json.headers['x-zestora-signature'] }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify($json.body) }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "cc6634a4-7dda-4d50-9828-3b0abf7ea89e",
+      "name": "Verify and process in Zestora",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Receive signed event": {
+      "main": [
+        [
+          {
+            "node": "Verify and process in Zestora",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "none",
+    "saveDataSuccessExecution": "none",
+    "saveManualExecutions": false,
+    "timezone": "Asia/Colombo"
+  },
+  "pinData": {}
+}

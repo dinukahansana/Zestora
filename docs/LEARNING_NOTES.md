@@ -69,3 +69,11 @@
 ## Phase 6
 
 A transactional outbox saves a business change and its event together. The worker claims the event after that transaction commits. n8n receives it at a Webhook node and returns it to Express for signature verification. Delivery failures can retry without recreating the order. The separate email job key keeps a repeated event from sending a second message.
+
+## Phase 7
+
+The assistant uses the model to decide what the question is asking. Express then renders the answer from current menu records. An invented slug from the model cannot turn into a drink or price in the storefront. Order access needs proof of ownership, so the model never sees customer order details.
+
+A verified review and its derived sentiment are separate records. Owners can revisit what the customer actually wrote. Reports use the same separation for sales data and generated narrative. Marketing drafts have a distinct approval state so the owner controls what gets shared.
+
+A recipe maps a drink to inventory quantities. The order and the stock reservation commit together, and cancelling restores that reservation once. Crossing a configured threshold records a low-stock event for n8n.

@@ -1,0 +1,80 @@
+{
+  "id": "ZestoraAssistant",
+  "name": "AI Customer Assistant",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "zestora-ai-assistant",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
+        "options": {}
+      },
+      "id": "7326df20-fe69-4187-b63d-754b1a07288c",
+      "name": "Receive signed event",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "74d5d860-8d76-44df-9910-38776f4a5d7f"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:3001/api/integrations/n8n/ai",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-zestora-timestamp",
+              "value": "={{ $json.headers['x-zestora-timestamp'] }}"
+            },
+            {
+              "name": "x-zestora-signature",
+              "value": "={{ $json.headers['x-zestora-signature'] }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify($json.body) }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "e5f86814-930c-4c7f-a864-afe192188ebd",
+      "name": "Verify and process in Zestora",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        0
+      ]
+    }
+  ],
+  "connections": {
+    "Receive signed event": {
+      "main": [
+        [
+          {
+            "node": "Verify and process in Zestora",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "none",
+    "saveDataSuccessExecution": "none",
+    "saveManualExecutions": false,
+    "timezone": "Asia/Colombo"
+  },
+  "pinData": {}
+}

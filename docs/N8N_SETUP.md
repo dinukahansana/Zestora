@@ -5,7 +5,7 @@ n8n coordinates steps that run outside the storefront request. A trigger starts 
 ## Local configuration
 
 1. Start an n8n 2.x instance using the [installation guide](https://docs.n8n.io/deploy/host-n8n/install-options/install-with-npm.md) or the hosted service.
-2. Import the three exports from `automation/workflows`. Point the HTTP Request nodes at the API's `/api/integrations/n8n/consume` endpoint. The local default uses port 3001.
+2. Import the nine exports from `automation/workflows`. Point the HTTP Request nodes at the API's `/api/integrations/n8n/consume` endpoint for events and the `/api/integrations/n8n/ai` endpoint for AI task workflows. The local default uses port 3001.
 3. Publish the workflows. Set `N8N_WEBHOOK_BASE_URL` to the production webhook base, such as `http://127.0.0.1:5678/webhook/` for local testing. Hosted deployments require HTTPS.
 4. Configure a high-entropy `N8N_SHARED_SECRET` only in the API environment. n8n forwards the signed headers and does not need the secret.
 5. Create an order or change its status, then check the **Automation** tab for the event, status, and attempt count.
@@ -15,6 +15,8 @@ n8n coordinates steps that run outside the storefront request. A trigger starts 
 | Order Created Notification | `zestora-order-created` | New orders and matching email jobs. |
 | Order Status Notification | `zestora-order-status` | Order fulfilment status changes. |
 | Zestora Business Events | `zestora-events` | Payment, catalogue, stock, and account events. |
+| Assistant, recommendations, business report, marketing draft | `zestora-ai-assistant`, `zestora-product-recommendations`, `zestora-business-report`, `zestora-marketing-draft` | Verified synchronous AI tasks. |
+| Feedback Analysis and Low Stock | `zestora-feedback-analysis`, `zestora-low-stock` | Review classification and store stock notices. |
 
 The API checks the schema, HMAC signature, five-minute timestamp window, and stored event. On failure, the worker delays and retries the delivery, then records a terminal failure. Administrators can requeue a failed event. Each email job has a separate unique identity to guard against duplicate sends.
 

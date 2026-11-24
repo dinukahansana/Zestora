@@ -1,0 +1,15 @@
+{
+  "requestId": "4ffc89d5-4f7f-4413-bc3e-d9bcbd428d51",
+  "feature": "reporting",
+  "rule": "Describe the verified figures qualitatively.",
+  "data": {
+    "language": "en",
+    "metrics": {
+      "totals": {
+        "revenue": 0,
+        "paidOrders": 0
+      },
+      "rows": []
+    }
+  }
+}

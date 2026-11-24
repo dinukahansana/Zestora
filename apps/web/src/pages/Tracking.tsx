@@ -4,6 +4,7 @@ import { Link, useLocation, useSearchParams } from 'react-router';
 import { PageHeading } from '../components/Storefront';
 import { api, RequestError, send, useAccount, type Order } from '../commerce/api';
 import { PaymentAction } from './Payment';
+import { ReviewForm } from '../commerce/Review';
 import { OrderDetails } from '../commerce/Summary';
 import { languageOf } from '../i18n';
 
@@ -70,7 +71,7 @@ export function TrackingPage() {
           <button className="button button-primary w-fit" type="submit" disabled={pending}>{t(pending ? 'common.loading' : 'commerce.findOrder')}</button>
         </form>
         <RequestError error={error} />
-        {order && <><OrderDetails order={order} /><PaymentAction order={order} guestKey={trackingKey || undefined} onStatus={status => setOrder({ ...order, paymentStatus: status })} /></>}
+        {order && <><OrderDetails order={order} /><PaymentAction order={order} guestKey={trackingKey || undefined} onStatus={status => setOrder({ ...order, paymentStatus: status })} />{account.data && !trackingKey && order.orderStatus === 'completed' && <ReviewForm key={order.reference} order={order} />}</>}
       </div>
     </>
   );

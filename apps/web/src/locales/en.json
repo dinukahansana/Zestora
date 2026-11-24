@@ -279,7 +279,11 @@
     "IMAGE_UPLOAD_FAILED": "The image upload failed.",
     "INVALID_TRANSITION": "This order status change is unavailable.",
     "PAYMENT_UNAVAILABLE": "This cash payment cannot be confirmed.",
-    "FORBIDDEN": "You do not have permission to do that."
+    "FORBIDDEN": "You do not have permission to do that.",
+    "REVIEW_UNAVAILABLE": "Reviews are available for completed order items you purchased.",
+    "REVIEW_EXISTS": "You already reviewed this order item.",
+    "INVALID_RECIPE": "Choose existing inventory items.",
+    "AI_UNAVAILABLE": "AI generation is unavailable."
   },
   "admin": {
     "title": "Admin dashboard",
@@ -360,7 +364,8 @@
     "zones": "Delivery zones",
     "notifications": "Enable notifications",
     "ai": "Enable AI features",
-    "automation": "Automation"
+    "automation": "Automation",
+    "insights": "Insights"
   },
   "payment": {
     "billingAddress": "Billing address",
@@ -397,5 +402,70 @@
       "review_created": "Review created",
       "customer_registered": "Customer registered"
     }
+  },
+  "ai": {
+    "assistant": "Menu assistant",
+    "recommendations": "Find a drink",
+    "assistantIntro": "Ask about drinks, ingredients, shop hours, or order status.",
+    "recommendationsIntro": "Describe the flavours you like to find available options.",
+    "question": "Your question",
+    "preference": "Flavour preference",
+    "exclude": "Exclude ingredients (comma-separated)",
+    "optionalTracking": "Order tracking details (optional)",
+    "ask": "Ask the assistant",
+    "suggest": "Find suggestions",
+    "noPicks": "No available items match those exclusions.",
+    "details": "View details",
+    "source": {
+      "ai": "AI-assisted",
+      "fallback": "Based on shop records",
+      "verified": "Verified order data",
+      "template": "Template draft"
+    },
+    "leaveReview": "Leave a review",
+    "reviewProduct": "Product to review",
+    "rating": "Rating",
+    "review": "Your review",
+    "reviewSent": "Your review was saved.",
+    "submitReview": "Submit review",
+    "businessReport": "Business report",
+    "generateReport": "Generate report",
+    "savedReport": "Saved report",
+    "paidOrders": "Paid orders",
+    "feedback": "Feedback insights",
+    "reviewCount_one": "{{count}} review",
+    "reviewCount_other": "{{count}} reviews",
+    "topics": "Common topics",
+    "sentiment": {
+      "positive": "Positive",
+      "neutral": "Neutral",
+      "negative": "Negative"
+    },
+    "stockUse": "Ingredient usage",
+    "stockUsageLine": "{{used}} {{unit}} used in 30 days · {{onHand}} on hand",
+    "recipe": "Inventory recipe",
+    "unitsPerItem": "Units per item",
+    "addIngredient": "Link stock item",
+    "marketing": "Marketing drafts",
+    "draftType": "Draft type",
+    "type": {
+      "social": "Social caption",
+      "description": "Product description",
+      "promotion": "Promotion idea",
+      "seasonal": "Seasonal campaign"
+    },
+    "tone": "Tone",
+    "toneOptions": {
+      "friendly": "Friendly",
+      "premium": "Premium",
+      "playful": "Playful"
+    },
+    "brief": "Brief (optional)",
+    "generateDraft": "Generate draft",
+    "draftStatus": {
+      "draft": "Draft",
+      "approved": "Approved"
+    },
+    "approveDraft": "Approve draft"
   }
 }

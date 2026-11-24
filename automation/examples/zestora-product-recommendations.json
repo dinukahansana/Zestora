@@ -1,0 +1,10 @@
+{
+  "requestId": "30018bc5-69fe-47a8-bc4a-bd482b03a972",
+  "feature": "recommendations",
+  "rule": "Select matching verified product slugs.",
+  "data": {
+    "preference": "Tart fruit",
+    "language": "en",
+    "catalogue": []
+  }
+}

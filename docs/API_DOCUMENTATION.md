@@ -94,3 +94,9 @@ Signed-in customers can pay and read their orders from their own account. Guest 
 `POST /api/integrations/n8n/consume` accepts an event and the headers `X-Zestora-Timestamp` and `X-Zestora-Signature`. Express verifies the HMAC and clock window, checks the stored envelope, and returns `{ accepted, eventId, duplicate }`.
 
 `GET /api/admin/automation` shows recent events. An administrator can use `POST /api/admin/automation/:eventId/retry` to requeue a failed event and record the action in the audit log.
+
+## AI and ingredient usage
+
+`POST /api/ai/assistant` accepts a question and language, with optional order reference and guest key. `POST /api/ai/recommendations` accepts a flavour preference, language, and an exclusion list. Both return verified catalogue cards and an answer source. `POST /api/reviews` accepts a rating and text for an item from the signed-in customer's completed order.
+
+The administrator-only `/api/admin/ai` routes provide report history and generation, feedback aggregates, marketing drafts and approval, ingredient usage, and aggregate model usage. The data includes a source label for the model response or fallback. `POST /api/integrations/n8n/ai` requires a fresh signed AI task created by the API. The regular signed n8n consumer handles review and low-stock events.

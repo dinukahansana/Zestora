@@ -7,7 +7,8 @@ import { languageOf } from '../i18n';
 import { Check, Field, LocalFields, Panel, Save, localOf, numberOf, valueOf } from './Fields';
 
 interface AdminCategory extends Category { position: number; published: boolean }
-interface AdminProduct extends Product { published: boolean }
+interface RecipePart { stockSlug: string; units: number }
+interface AdminProduct extends Product { published: boolean; recipe?: RecipePart[] }
 interface Catalogue { categories: AdminCategory[]; products: AdminProduct[] }
 const blankChoice = { id: '', name: { en: '', si: '' }, price: 0 };
 const catalogueKey = ['admin', 'catalogue'];
@@ -83,6 +84,9 @@ function ProductForm({ item, categories, onSaved }: { item?: AdminProduct; categ
   const { t, i18n } = useTranslation();
   const language = languageOf(i18n.resolvedLanguage);
   const state = useSave(onSaved);
+  const [recipe, setRecipe] = useState<RecipePart[]>(item?.recipe ?? []);
+  const inventory = useQuery({ queryKey: ['admin', 'inventory'], queryFn: () => api<{ items: { slug: string; name: Record<'en' | 'si', string>; unit: string }[] }>('/admin/inventory') });
+  const stock = inventory.data?.items ?? [];
   const [sizes, setSizes] = useState<Choice[]>(item?.sizes ?? [blankChoice]);
   const [addOns, setAddOns] = useState<Choice[]>(item?.addOns ?? []);
   const [image, setImage] = useState(item?.image ?? '');
@@ -101,7 +105,7 @@ function ProductForm({ item, categories, onSaved }: { item?: AdminProduct; categ
       const slug = valueOf(values, 'slug');
       await send(item ? `/admin/products/${item.slug}` : '/admin/products', {
         slug, category: valueOf(values, 'category'), name: localOf(values, 'name'), description: localOf(values, 'description'),
-        ingredients: en.map((name, index) => ({ en: name, si: si[index] })), sizes, addOns, image,
+        ingredients: en.map((name, index) => ({ en: name, si: si[index] })), sizes, addOns, image, recipe,
         published: values.has('published'), featured: values.has('featured'), available: values.has('available'), demo: values.has('demo'),
       }, item ? 'PUT' : 'POST');
     });
@@ -133,6 +137,21 @@ function ProductForm({ item, categories, onSaved }: { item?: AdminProduct; categ
     }} />
     <Choices title={t('product.size')} choices={sizes} update={setSizes} required />
     <Choices title={t('product.addOns')} choices={addOns} update={setAddOns} />
+    <fieldset className="grid gap-3 rounded-xl border border-line p-3">
+      <legend className="px-1 text-sm font-extrabold">{t('ai.recipe')}</legend>
+      <RequestError error={inventory.error} />
+      {recipe.map((part, index) => <div key={index} className="grid items-end gap-2 sm:grid-cols-3">
+        <label className="grid gap-1 text-sm font-bold">{t('admin.inventory')}<select className="field" required value={part.stockSlug} onChange={event => setRecipe(recipe.map((value, i) => i === index ? { ...value, stockSlug: event.target.value } : value))}>
+          {stock.filter(value => value.slug === part.stockSlug || !recipe.some(item => item.stockSlug === value.slug)).map(value => <option key={value.slug} value={value.slug}>{value.name[language]} · {value.unit}</option>)}
+        </select></label>
+        <label className="grid gap-1 text-sm font-bold">{t('ai.unitsPerItem')}<input className="field" type="number" min={1} required value={part.units} onChange={event => setRecipe(recipe.map((value, i) => i === index ? { ...value, units: Number(event.target.value) } : value))} /></label>
+        <button type="button" className="button button-outline" onClick={() => setRecipe(recipe.filter((_value, i) => index !== i))}>{t('commerce.remove')}</button>
+      </div>)}
+      {stock.length > recipe.length && <button type="button" className="button button-outline w-fit" onClick={() => {
+        const available = stock.find(value => !recipe.some(item => item.stockSlug === value.slug));
+        if (available) setRecipe([...recipe, { stockSlug: available.slug, units: 1 }]);
+      }}>{t('ai.addIngredient')}</button>}
+    </fieldset>
     <label className="grid gap-1 text-sm font-bold">{t('admin.image')}<input className="field" value={image} onChange={event => setImage(event.target.value)} required /></label>
     <label className="grid gap-1 text-sm font-bold">{t(uploading ? 'common.loading' : 'admin.upload')}<input className="field" type="file" accept="image/png,image/jpeg,image/webp" disabled={uploading} onChange={event => void upload(event.target.files?.[0])} /></label>
     <div className="flex flex-wrap gap-x-4">

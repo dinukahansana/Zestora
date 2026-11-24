@@ -9,6 +9,8 @@ import request from 'supertest';
 import sharp from 'sharp';
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest';
 import { createApp } from '../src/app.ts';
+import { Stock } from '../src/admin/models.ts';
+import { AiUsage, Review, ReviewAnalysis } from '../src/ai/models.ts';
 import { deliverOne } from '../src/automation/delivery.ts';
 import { eventSignature, Outbox } from '../src/automation/events.ts';
 import { Session, User } from '../src/auth/models.ts';
@@ -534,4 +536,124 @@ describe('automation delivery', () => {
       await new Promise<void>(resolve => relay.close(() => resolve()));
     }
   }, 15000);
+});
+
+describe('AI services and ingredient stock', () => {
+  test('the assistant uses verified data and requires proof for order details', async () => {
+    const menu = await request(app).post('/api/ai/assistant').send({ question: 'Which drink has mango?', language: 'en' }).expect(200);
+    expect(menu.body.products).toEqual(expect.arrayContaining([expect.objectContaining({ slug: 'golden-mango', startingPrice: 690 })]));
+    expect(menu.body.source).toBe('fallback');
+    const guest = guestKey();
+    const created = await request(app).post('/api/orders').send({
+      items: [mango], fulfillment: pickup, customer: buyer, expectedTotal: 1940, checkoutKey: randomUUID(), guestKey: guest,
+    }).expect(201);
+    const ref = created.body.order.reference;
+    const denied = await request(app).post('/api/ai/assistant').send({ question: 'Order status', reference: ref, guestKey: guestKey() }).expect(200);
+    expect(denied.body.link).toBe('/track');
+    const verified = await request(app).post('/api/ai/assistant').send({ question: 'Order status', reference: ref, guestKey: guest }).expect(200);
+    expect(verified.body).toMatchObject({ source: 'verified', answer: 'Order status: Pending' });
+    expect(verified.text).not.toContain(buyer.email);
+  });
+
+  test('model outputs are validated and sensitive text is removed from requests', async () => {
+    const bodies: string[] = [];
+    let modelAnswer: unknown = { intent: 'products', slugs: ['unlisted-experiment', 'golden-mango'] };
+    const endpoint = createServer(async (incoming, response) => {
+      const parts = [];
+      for await (const chunk of incoming) parts.push(chunk);
+      bodies.push(Buffer.concat(parts).toString());
+      response.setHeader('Content-Type', 'application/json');
+      response.end(JSON.stringify({ choices: [{ message: { content: JSON.stringify(modelAnswer) } }], usage: { prompt_tokens: 21, completion_tokens: 13 } }));
+    });
+    endpoint.listen(0, '127.0.0.1');
+    await once(endpoint, 'listening');
+    const address = endpoint.address();
+    if (!address || typeof address === 'string') throw new Error('Model fixture failed.');
+    try {
+      const configured = createApp(readConfig({ NODE_ENV: 'test', AI_API_BASE_URL: 'http://127.0.0.1:' + address.port + '/v1', AI_MODEL: 'fixture-model' }));
+      const menu = await request(configured).post('/api/ai/assistant').send({ question: 'Find mango for customer@zestora.example', language: 'en' }).expect(200);
+      expect(menu.body).toMatchObject({ source: 'ai', products: [expect.objectContaining({ slug: 'golden-mango', startingPrice: 690 })] });
+      expect(bodies[0]).not.toContain('customer@zestora.example');
+      expect(bodies[0]).toContain('[email]');
+
+      modelAnswer = { slugs: ['passion-cooler', 'berry-bliss', 'invented-product'] };
+      const picks = await request(configured).post('/api/ai/recommendations').send({ preference: 'mango', exclude: ['yoghurt'] }).expect(200);
+      expect(picks.body.source).toBe('fallback');
+      expect(picks.body.products.map((item: { slug: string }) => item.slug)).not.toContain('berry-bliss');
+      expect(picks.body.products.map((item: { slug: string }) => item.slug)).not.toContain('passion-cooler');
+      expect(await AiUsage.exists({ feature: 'assistant', inputTokens: 21, outputTokens: 13 })).toBeTruthy();
+    } finally {
+      await new Promise<void>(resolve => endpoint.close(() => resolve()));
+    }
+  });
+
+  test('reports stay grounded and marketing content requires owner approval', async () => {
+    const owner = request.agent(createApp(config));
+    await owner.post('/api/auth/login').send({ email: demoEmail, password }).expect(200);
+    await request(app).get('/api/admin/ai/reports').expect(401);
+    const report = await owner.post('/api/admin/ai/reports').send({ period: 'month', language: 'en' }).expect(201);
+    expect(report.body.report.metrics.totals).toMatchObject({ revenue: 1940, paidOrders: 1 });
+    const draft = await owner.post('/api/admin/ai/drafts').send({ type: 'seasonal', tone: 'friendly', language: 'si' }).expect(201);
+    expect(draft.body.draft).toMatchObject({ source: 'template', status: 'draft' });
+    const id = draft.body.draft._id;
+    await request(app).patch('/api/admin/ai/drafts/' + id + '/approve').expect(401);
+    const approval = await owner.patch('/api/admin/ai/drafts/' + id + '/approve').expect(200);
+    expect(approval.body.draft.status).toBe('approved');
+    await owner.patch('/api/admin/ai/drafts/' + id + '/approve').expect(404);
+  });
+
+  test('verified customers submit a unique review and its analysis stays separate', async () => {
+    const reviewApp = createApp(config);
+    const customer = request.agent(reviewApp);
+    const owner = request.agent(reviewApp);
+    await customer.post('/api/auth/login').send({ email: buyer.email, password }).expect(200);
+    await owner.post('/api/auth/login').send({ email: demoEmail, password }).expect(200);
+    const order = await customer.post('/api/orders').send({
+      items: [mango], fulfillment: pickup, customer: buyer, expectedTotal: 1940, checkoutKey: randomUUID(),
+    }).expect(201);
+    const ref = order.body.order.reference;
+    const text = 'Lovely mango flavour and quick pickup.';
+    const review = { reference: ref, productSlug: 'golden-mango', rating: 5, text, language: 'en' };
+    await customer.post('/api/reviews').send(review).expect(403);
+    for (const status of ['confirmed', 'preparing', 'ready_for_pickup', 'completed']) {
+      await owner.patch('/api/admin/orders/' + ref + '/status').send({ status }).expect(200);
+    }
+    const created = await customer.post('/api/reviews').send(review).expect(201);
+    await vi.waitFor(async () => expect((await ReviewAnalysis.findOne({ reviewId: created.body.id }))?.sentiment).toBe('positive'));
+    expect((await Review.findById(created.body.id))?.text).toBe(text);
+    expect((await Outbox.findOne({ 'event.resourceId': created.body.id }))?.event.payload).toEqual({ productSlug: 'golden-mango' });
+    const summary = await owner.get('/api/admin/ai/feedback').expect(200);
+    expect(summary.body).toMatchObject({ count: 1, sentiments: [{ _id: 'positive', count: 1 }] });
+    await customer.post('/api/reviews').send(review).expect(409);
+  });
+
+  test('recipes consume stock, emit threshold events, and restore a cancelled order once', async () => {
+    const appWithStock = createApp(config);
+    const owner = request.agent(appWithStock);
+    await owner.post('/api/auth/login').send({ email: demoEmail, password }).expect(200);
+    const name = { en: 'Lime', si: 'දෙහි' };
+    await owner.put('/api/admin/inventory/lime-recipe').send({ name, unit: 'pieces', onHand: 3, threshold: 1 }).expect(200);
+    const product = {
+      slug: 'lime-recipe-drink', category: 'juices', name, description: name, ingredients: [name],
+      image: '/images/green.webp', sizes: [{ id: 'regular', name, price: 500 }], addOns: [],
+      recipe: [{ stockSlug: 'lime-recipe', units: 2 }],
+    };
+    await owner.post('/api/admin/products').send(product).expect(201);
+    const items = [{ productSlug: product.slug, sizeId: 'regular', addOnIds: [], quantity: 1 }];
+    const order = await request(appWithStock).post('/api/orders').send({
+      items, fulfillment: pickup, customer: buyer, expectedTotal: 500, checkoutKey: randomUUID(), guestKey: guestKey(),
+    }).expect(201);
+    const ref = order.body.order.reference;
+    expect((await Stock.findOne({ slug: 'lime-recipe' }))?.onHand).toBe(1);
+    expect(await Outbox.countDocuments({ 'event.eventType': 'inventory.low_stock', 'event.resourceId': 'lime-recipe' })).toBe(1);
+    const menu = await request(appWithStock).get('/api/products/lime-recipe-drink').expect(200);
+    expect(menu.body.item.available).toBe(false);
+    expect(menu.body.item).not.toHaveProperty('recipe');
+    await request(appWithStock).post('/api/orders/quote').send({ items, fulfillment: pickup }).expect(409);
+    const inventory = await owner.get('/api/admin/ai/inventory').expect(200);
+    expect(inventory.body.items).toEqual(expect.arrayContaining([expect.objectContaining({ slug: 'lime-recipe', used: 2, onHand: 1 })]));
+    await owner.patch('/api/admin/orders/' + ref + '/status').send({ status: 'cancelled' }).expect(200);
+    await owner.patch('/api/admin/orders/' + ref + '/status').send({ status: 'cancelled' }).expect(409);
+    expect((await Stock.findOne({ slug: 'lime-recipe' }))?.onHand).toBe(3);
+  });
 });

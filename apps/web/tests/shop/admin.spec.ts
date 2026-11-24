@@ -53,3 +53,26 @@ test('owner locates an order and records its cash payment', async ({ page }) => 
   await page.getByRole('button', { name: 'Overview' }).click();
   await expect(page.getByText('Revenue', { exact: true }).locator('..')).toContainText(/LKR\s*690/);
 });
+
+test('customer sees verified suggestions and owner can save an AI fallback report and draft', async ({ page }) => {
+  await page.goto('/assistant');
+  await page.getByLabel('Your question').fill('Which drinks have mango?');
+  await page.getByRole('button', { name: 'Ask the assistant' }).click();
+  await expect(page.getByRole('link', { name: 'Golden Mango' })).toBeVisible();
+  await expect(page.getByText('Based on shop records')).toBeVisible();
+  await page.goto('/recommendations');
+  await page.getByLabel('Flavour preference').fill('Mango');
+  await page.getByLabel('Exclude ingredients (comma-separated)').fill('yoghurt');
+  await page.getByRole('button', { name: 'Find suggestions' }).click();
+  await expect(page.getByText('Based on shop records')).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Berry Bliss' })).toHaveCount(0);
+
+  await signIn(page);
+  await page.getByRole('button', { name: 'Insights' }).click();
+  await page.getByRole('button', { name: 'Generate report' }).click();
+  await expect(page.getByLabel('Saved report')).toBeVisible();
+  await page.getByRole('button', { name: 'Generate draft' }).click();
+  await expect(page.getByText('Draft · Template draft')).toBeVisible();
+  await page.getByRole('button', { name: 'Approve draft' }).click();
+  await expect(page.getByText('Approved · Template draft')).toBeVisible();
+});

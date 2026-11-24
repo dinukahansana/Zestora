@@ -39,3 +39,7 @@ The API suite covers transactional event capture, signing, stale and altered mes
 | Playwright | Responsive and bilingual navigation, guest checkout, tracking, and administrative flows. |
 
 After each milestone, record commands, passed and failed checks, and anything still unverified. Use provider sandboxes or verified test instances for external integrations.
+
+## AI and inventory tests
+
+The API suite tests current prices, tracking authorization, redaction and response validation against a controlled local model endpoint, draft approval, review ownership and uniqueness, and transactional stock usage and restoration. The shop browser suite reaches the assistant, filtered recommendations, reports, and draft approval through their normal routes. A configured commercial model account is needed to verify that deployment's provider and quota.

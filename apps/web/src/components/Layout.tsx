@@ -131,7 +131,7 @@ function Footer() {
         </section>
         <section>
           <h2 className="mb-3 text-sm font-extrabold text-lime">{t('footer.help')}</h2>
-          <ul className="space-y-2 text-sm">{policies.map(link => <li key={link.path}><Link className="hover:underline" to={link.path}>{t(link.name)}</Link></li>)}{orderingEnabled && <li><Link className="hover:underline" to="/track">{t('commerce.track')}</Link></li>}</ul>
+          <ul className="space-y-2 text-sm">{policies.map(link => <li key={link.path}><Link className="hover:underline" to={link.path}>{t(link.name)}</Link></li>)}{orderingEnabled && <><li><Link className="hover:underline" to="/track">{t('commerce.track')}</Link></li><li><Link className="hover:underline" to="/assistant">{t('ai.assistant')}</Link></li></>}</ul>
         </section>
         <section>
           <h2 className="mb-3 text-sm font-extrabold text-lime">{t('footer.contact')}</h2>

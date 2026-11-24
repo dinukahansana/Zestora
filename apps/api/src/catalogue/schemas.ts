@@ -31,6 +31,8 @@ export const productInput = z.strictObject({
   demo: z.boolean().default(false),
   sizes: z.array(choice).min(1).max(20).refine(uniqueChoices, 'Size identifiers must be unique.'),
   addOns: z.array(choice).max(30).refine(uniqueChoices, 'Add-on identifiers must be unique.'),
+  recipe: z.array(z.strictObject({ stockSlug: slugSchema, units: z.number().int().min(1).max(1000000) })).max(30)
+    .refine(parts => new Set(parts.map(part => part.stockSlug)).size === parts.length).default([]),
 });
 
 export type CategoryInput = z.infer<typeof categoryInput>;
