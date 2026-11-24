@@ -14,7 +14,7 @@ The working brand is **Zestora** with the tagline **Freshness in Every Sip.** Th
 | Automation and AI | n8n for workflows and a configurable server-side LLM provider |
 | Payments | PayHere sandbox, followed by live setup after merchant approval and verification |
 | Testing | Vitest, Supertest, and Playwright as relevant |
-| Deployment | Vercel or equivalent for the frontend, Node.js hosting for the API, and hosted or self-hosted n8n. Provider selections are pending. |
+| Deployment | Vercel or equivalent for the frontend, Node.js hosting for the API, and hosted or self-hosted n8n. The Render Blueprint provides a same-origin demo deployment option. |
 
 Use the confirmed stack unless a technical constraint calls for a change. Explain the constraint and proposed change before implementing it.
 
@@ -24,4 +24,4 @@ Develop one milestone at a time. Inspect the code and Git status, explain the pl
 
 Each session should start with this document and [implementation status](IMPLEMENTATION_STATUS.md). Read the relevant feature documents before editing and leave the repository with an updated progress record and a clear next task.
 
-Phase 0 established separate frontend and API workspaces, a health endpoint, and project documentation. Phase 1 built the bilingual storefront and demo catalogue. Phase 2 added MongoDB models, catalogue APIs, and account sessions. Phase 3 shipped the cart, order and tracking flow, and customer pages. Phase 4 added the administration portal, reports, inventory, and shop configuration. Phase 5 added PayHere and email notifications. Phase 6 added the outbox, n8n workflows, and automation monitoring. Phase 7 added the assistant, recommendations, reports, review analysis, marketing drafts, and ingredient recipes. Phase 8 added scheduled sales reports, opt-in feedback invitations, basket-based pairings, demand insights, and operational monitoring. See [implementation status](IMPLEMENTATION_STATUS.md) for what has been verified and what comes next.
+Phase 0 established separate frontend and API workspaces, a health endpoint, and project documentation. Phase 1 built the bilingual storefront and demo catalogue. Phase 2 added MongoDB models, catalogue APIs, and account sessions. Phase 3 shipped the cart, order and tracking flow, and customer pages. Phase 4 added the administration portal, reports, inventory, and shop configuration. Phase 5 added PayHere and email notifications. Phase 6 added the outbox, n8n workflows, and automation monitoring. Phase 7 added the assistant, recommendations, reports, review analysis, marketing drafts, and ingredient recipes. Phase 8 added scheduled sales reports, opt-in feedback invitations, basket-based pairings, demand insights, and operational monitoring. Phase 9 added the full local demo command, production HTTPS verification, CI, and the Render Blueprint. See [implementation status](IMPLEMENTATION_STATUS.md) for what has been verified and what comes next.

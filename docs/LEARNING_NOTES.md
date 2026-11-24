@@ -87,3 +87,11 @@ A one-time feedback invitation is an opt-in on each order. Completing a consenti
 Pairing recommendations use counts from completed paid baskets. Each basket counts once per item. The API checks the current published menu and ingredient exclusions before returning any suggestion. Demand uses 30 days of recorded ingredient usage on eligible sales. It estimates the next seven days only after 15 orders across seven distinct days. The estimate is a simple rate and does not model seasonality.
 
 The Insights tab shows model attempts, successful responses, average duration, and token counts by feature. This helps an owner spot a slow or unreliable model while keeping prompts out of usage logs.
+
+## Phase 9
+
+Serving React and Express under one HTTPS origin simplifies how the browser sends a secure session cookie. React handles storefront URLs like `/menu/golden-mango`. Express still answers `/api` URLs and returns JSON for missing endpoints.
+
+A fingerprinted asset filename changes with its content, so browsers can cache that URL for a year while rechecking the storefront HTML. Loading the home animation as a separate chunk reduced the main gzip bundle from about 123 KB to 105 KB. The browser can display the headline while the animation code loads.
+
+CI installs from the lockfile and reruns release tests against a temporary database. Deploying that same commit to a host adds the real database, domain, and provider configuration. A local HTTPS test can verify cookies and routes. Only the gateway's actual sandbox can verify that PayHere reaches a public callback.

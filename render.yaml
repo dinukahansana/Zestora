@@ -1,0 +1,29 @@
+# yaml-language-server: $schema=https://render.com/schema/render.yaml.json
+services:
+  - type: web
+    name: zestora
+    runtime: node
+    region: singapore
+    plan: free
+    branch: main
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm run start:api
+    healthCheckPath: /api/ready
+    autoDeployTrigger: checksPass
+    envVars:
+      - key: NODE_VERSION
+        value: "24.19.0"
+      - key: SKIP_INSTALL_DEPS
+        value: "true"
+      - key: HOST
+        value: 0.0.0.0
+      - key: NODE_ENV
+        value: production
+      - key: SERVE_WEB
+        value: "true"
+      - key: TRUST_PROXY_HOPS
+        value: "1"
+      - key: VITE_CATALOGUE_MODE
+        value: api
+      - key: MONGODB_URI
+        sync: false

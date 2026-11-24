@@ -13,6 +13,7 @@
   ],
   "scripts": {
     "dev": "concurrently --kill-others --names web,api \"npm:dev:web\" \"npm:dev:api\"",
+    "demo:shop": "node scripts/shop-test-server.mts --demo",
     "dev:web": "npm run dev --workspace @zestora/web",
     "dev:api": "npm run dev --workspace @zestora/api",
     "typecheck": "npm run typecheck --workspaces",
@@ -23,6 +24,7 @@
     "test:api": "npm run test --workspace @zestora/api",
     "seed:demo": "node --env-file-if-exists=.env scripts/seed-demo.mts",
     "create:admin": "node --env-file-if-exists=.env scripts/create-admin.mts",
+    "test:production": "node scripts/production-smoke.mts",
     "test:shop": "npm run test:shop --workspace @zestora/web"
   },
   "devDependencies": {

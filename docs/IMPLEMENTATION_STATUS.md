@@ -96,6 +96,13 @@ The starter page and health endpoint are the two implemented features. MongoDB A
 | Monitoring | Filter workflows by status, see next retries and mail results, and check model outcomes, average duration, and tokens by feature. |
 | Checks | 29 API cases, browser suites, type checking, both builds, and eleven workflows in n8n 2.48.8. A five-second test schedule verified repeated native triggers and the opted-in email workflow used a captured mail transport. |
 
-## Next milestone
+## Phase 9
 
-Phase 9 covers final validation and deployment.
+| Area | Status |
+| --- | --- |
+| Functional | Clean install, type checks, both production builds, 29 API cases, and 12 storefront and shop browser cases passed. The temporary demo command started, seeded the catalogue, and accepted its generated admin login. |
+| Security | Dependency audit returned zero findings. Local HTTPS smoke passed for secure cookies, blocked cross-origin mutations, CSP, and separation of JSON API errors from React routes. |
+| Performance and responsive | Main gzip bundle fell from about 123 KB to 105 KB. Fingerprinted assets are cacheable, and final smoke checks passed at 390 px and 1440 px. |
+| Integrations | Eleven n8n workflows verified locally, including a native recurring trigger and duplicate feedback delivery handling. Payment verification and simulator tests passed using local fixtures. |
+| Production | One-origin production hosting, a validated Render Blueprint, GitHub Actions, and a deployment runbook are ready. |
+| External verification | Public hosting and Atlas connection are pending. Real PayHere Sandbox callbacks, SMTP, Cloudinary, hosted n8n, and the chosen model provider require their deployment settings. |

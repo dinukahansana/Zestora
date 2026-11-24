@@ -1,5 +1,5 @@
 import { ArrowDownRight, ArrowRight, Check, Leaf, Sparkles } from 'lucide-react';
-import { domAnimation, LazyMotion, m, useReducedMotion } from 'framer-motion';
+import { LazyMotion, m, useReducedMotion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { categoryIcons, DemoLabel, ProductCard } from '../components/Storefront';
@@ -7,6 +7,7 @@ import { CatalogueMessage, useCatalogue } from '../content/useCatalogue';
 import { languageOf } from '../i18n';
 
 const categoryStyles = ['bg-sun/45', 'bg-blush', 'bg-moss', 'bg-lime/65', 'bg-sun/35', 'bg-blush'];
+const animationFeatures = () => import('../content/animationFeatures').then(module => module.default);
 const featureKeys = ['home.fruit', 'home.choices', 'home.local'];
 
 export function HomePage() {
@@ -23,10 +24,10 @@ export function HomePage() {
     <>
       <section className="container-wide pt-5 sm:pt-8">
         <div className="grid overflow-hidden rounded-[1.75rem] bg-forest text-cream sm:rounded-[2rem] lg:grid-cols-[.98fr_1fr]">
-          <LazyMotion features={domAnimation} strict>
+          <LazyMotion features={animationFeatures} strict>
             <m.div
-              initial={reducedMotion ? false : { y: 10, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
+              initial={reducedMotion ? false : { y: 10 }}
+              animate={{ y: 0 }}
               transition={{ duration: 0.4 }}
               className="relative flex flex-col justify-center px-6 py-11 sm:px-11 sm:py-15"
             >

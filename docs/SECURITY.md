@@ -28,3 +28,9 @@
 - Calculate prices and inventory changes on the API. Verify PayHere notifications with the server-side checksum and process callbacks idempotently.
 - Verify n8n webhook signatures and timestamps. Reject invalid or replayed requests and use unique event IDs to avoid duplicate side effects.
 - Use verified business data for AI and validate all generated references or suggested values before business logic consumes them.
+
+## Production review
+
+The production same-origin server requires MongoDB and an explicit public HTTPS origin. Express serves only the compiled public distribution. Unknown API routes keep their JSON error response. The Content Security Policy allows Cloudinary images and the two documented PayHere checkout origins. The secure session cookie and allowed-origin rules were tested through a local HTTPS reverse proxy.
+
+Secrets stay in provider settings or an ignored local environment. Separate staging from production because a sandbox order can reserve stock in its own database. The n8n schedule credential is distinct from the event HMAC secret. Mail delivery status is separate from workflow delivery. An interrupted SMTP send can have an uncertain outcome, so the application avoids automatically resending a claimed message.

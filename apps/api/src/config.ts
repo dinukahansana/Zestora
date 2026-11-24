@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 const positivePort = z.coerce.number().int().min(1).max(65535).default(3001);
 const environmentSchema = z.object({
+  SERVE_WEB: z.enum(['true', 'false']).default('false'),
   HOST: z.string().trim().min(1).default('127.0.0.1'),
   PORT: positivePort,
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -30,6 +31,8 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
   const values = environmentSchema.safeParse({
     ...env,
     PORT: env.PORT || undefined,
+    SITE_ORIGIN: env.SITE_ORIGIN || env.RENDER_EXTERNAL_URL || undefined,
+    ALLOWED_ORIGINS: env.ALLOWED_ORIGINS || env.SITE_ORIGIN || env.RENDER_EXTERNAL_URL || undefined,
     MONGODB_URI: env.MONGODB_URI || undefined,
     CLOUDINARY_URL: env.CLOUDINARY_URL || undefined,
     AI_API_BASE_URL: env.AI_API_BASE_URL || undefined,
@@ -68,14 +71,24 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     throw new Error('AI_API_BASE_URL requires HTTPS or a local development host. Use separate credentials.');
   }
 
+  const serveWeb = values.data.SERVE_WEB === 'true';
+  const siteOrigin = new URL(values.data.SITE_ORIGIN).origin;
+  if (serveWeb && values.data.NODE_ENV === 'production') {
+    if (!values.data.MONGODB_URI) throw new Error('A production storefront requires MONGODB_URI.');
+    if (!siteOrigin.startsWith('https://') || !allowedOrigins.includes(siteOrigin)) {
+      throw new Error('Allow the public HTTPS SITE_ORIGIN in ALLOWED_ORIGINS.');
+    }
+  }
+
   return {
+    serveWeb,
     host: values.data.HOST,
     port: values.data.PORT,
     mongoUri: values.data.MONGODB_URI,
     secureCookies: values.data.NODE_ENV === 'production',
     trustProxyHops: values.data.TRUST_PROXY_HOPS,
     allowedOrigins,
-    siteOrigin: new URL(values.data.SITE_ORIGIN).origin,
+    siteOrigin,
     smtpUrl: values.data.SMTP_URL,
     cloudinaryUrl: values.data.CLOUDINARY_URL,
     aiBaseUrl: aiUrl?.href,

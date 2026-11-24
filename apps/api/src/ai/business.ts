@@ -52,8 +52,9 @@ export async function analyzeReview(id: string, provider: AiProvider) {
   try {
     await AiRun.create({ requestId, state: 'running', expiresAt: new Date(Date.now() + 120000) });
   } catch (error) {
-    if (isDuplicateKey(error)) return;
-    throw error;
+    if (!isDuplicateKey(error)) throw error;
+    if (await ReviewAnalysis.exists({ reviewId: review._id })) return;
+    throw new HttpError(409, 'REVIEW_ANALYSIS_RUNNING', 'The review analysis is in progress.');
   }
   try {
     const shop = await currentShop();

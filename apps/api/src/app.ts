@@ -18,6 +18,7 @@ import { errorHandler, HttpError, notFound } from './http.ts';
 import { createMailer, type SendEmail } from './mail.ts';
 import { orderingRouter } from './ordering/routes.ts';
 import { paymentsRouter } from './payments/routes.ts';
+import { mountStorefront } from './storefront.ts';
 
 export function createApp(
   config: AppConfig,
@@ -30,7 +31,13 @@ export function createApp(
   const ai = aiRoutes(config, runner, provider);
   if (config.trustProxyHops) app.set('trust proxy', config.trustProxyHops);
   app.disable('x-powered-by');
-  app.use(helmet());
+  app.use(helmet(config.serveWeb ? {
+    contentSecurityPolicy: { directives: {
+      imgSrc: ["'self'", 'data:', 'https://res.cloudinary.com'],
+      formAction: ["'self'", 'https://sandbox.payhere.lk', 'https://www.payhere.lk'],
+      upgradeInsecureRequests: config.secureCookies ? [] : null,
+    } },
+  } : {}));
   app.use(cors({
     origin: (origin, done) => done(null, Boolean(origin && config.allowedOrigins.includes(origin))),
     credentials: true,
@@ -72,8 +79,8 @@ export function createApp(
   api.use(['/catalogue', '/products', '/categories', '/ai', '/reviews'], requireDatabase);
   api.use(ai.router);
   api.use(catalogueRouter);
-  app.use('/api', api);
-
+  app.use('/api', api, notFound);
+  if (config.serveWeb) mountStorefront(app);
   app.use(notFound);
   app.use(errorHandler);
   return app;

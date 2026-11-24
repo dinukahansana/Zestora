@@ -30,9 +30,9 @@ The API suite sends synthetic signed and invalid test callbacks to Express. It v
 
 The API suite covers transactional event capture, signing, stale and altered messages, concurrent delivery claims, workflow outages, duplicate acknowledgement, and manual retry. See the [n8n setup](N8N_SETUP.md) for the published workflow paths and external test procedure.
 
-## Planned test coverage
+## Test coverage
 
-| Tool | Planned use |
+| Tool | Coverage |
 | --- | --- |
 | Vitest | Pricing, cart rules, coupon rules, status transitions, AI output validation, and workflow retry logic. |
 | Supertest | API contracts, authentication, authorization, CRUD, order operations, payment verification, webhooks, and duplicate events. |
@@ -43,3 +43,9 @@ After each milestone, record commands, passed and failed checks, and anything st
 ## AI and inventory tests
 
 The API suite tests current prices, tracking authorization, redaction and response validation against a controlled local model endpoint, draft approval, review ownership and uniqueness, and transactional stock usage and restoration. The shop browser suite reaches the assistant, filtered recommendations, reports, and draft approval through their normal routes. A configured commercial model account is needed to verify that deployment's provider and quota.
+
+## Release verification
+
+Run a clean `npm ci`, then type checking, the production build, the API suite, both browser suites, and `npm audit --audit-level=high`. Build with `VITE_CATALOGUE_MODE=api` before `npm run test:production`. On PowerShell, set `$env:VITE_CATALOGUE_MODE='api'` before the build. On a POSIX shell, run `VITE_CATALOGUE_MODE=api npm run build`. The production smoke uses OpenSSL, a temporary certificate and MongoDB replica set, and Chromium. Use `ZESTORA_OPENSSL_PATH` and `PLAYWRIGHT_CHROME_PATH` to override their discovery.
+
+The smoke test serves the built apps over one local HTTPS origin. It verifies the secure admin cookie, blocked cross-origin mutations, the PayHere form policy, immutable caching for fingerprinted files, JSON API 404s, refreshed React routes, and 390 px mobile layouts. It also verifies the simulator is unavailable in production. GitHub Actions runs these checks on pushes to main and pull requests.
